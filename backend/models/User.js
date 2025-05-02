@@ -54,12 +54,11 @@ const userSchema = new mongoose.Schema({
     },
     otpExpiry: {
         type: Date,
-    }
-    // professionalProfileId: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'ProfessionalProfile',
-    // }
-
+    },
+    professionalProfileId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ProfessionalProfile',
+    },
 });
 
 // This will hash the password before saving it to the database
