@@ -35,11 +35,11 @@ const professionalProfileSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    portfolio: {
-        title: String,
-        description: String,
-        imageURL: String,
-    },
+    portfolio: [{
+        title: { type: String },
+        description: { type: String },
+        imageUrl: { type: String }
+    }],
     hourlyRate: {
         type: Number,
     },
@@ -54,10 +54,6 @@ const professionalProfileSchema = new mongoose.Schema({
     averageRating: {
         type: Number,
     },
-    reviews: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Review'
-    }]
 });
 
 const ProfessionalProfile = mongoose.model('ProfessionalProfile', professionalProfileSchema);
