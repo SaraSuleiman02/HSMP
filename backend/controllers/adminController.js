@@ -1,4 +1,4 @@
-import User from '../models/User.js';
+import Admin from '../models/Admin.js';
 import fs from "fs";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import helpers from "../utils/helpers.js";
@@ -7,17 +7,17 @@ import jwt from 'jsonwebtoken';
 import { transporter } from '../utils/nodemailer.js';
 
 /**-----------------------------------------
- *  @desc Add a new user
- * @route POST /api/user
- * @access Public
- * @role Admin, User
+ *  @desc Add a new admin
+ * @route POST /api/admin
+ * @access Private
+ * @role Admin
  ------------------------------------------*/
-export const addUser = async (req, res) => {
+export const addAdmin = async (req, res) => {
     try {
-        const { name, email, password, role, phone, address } = req.body;
+        const { name, email, password, phone } = req.body;
 
         // validate equired fields 
-        if (!name || !email || !password || !role || !phone || !address) {
+        if (!name || !email || !password || !phone) {
             return res.status(400).json({ message: "Please Fill all required fields" });
         }
 
@@ -36,10 +36,10 @@ export const addUser = async (req, res) => {
             return res.status(400).json({ message: "Password must be at least 8 characters long, contain at least one uppercase letter, one number, and one special character" });
         }
 
-        // Check if the user already exists
-        const existingUser = await User.findOne({ email: email.toLowerCase() });
-        if (existingUser) {
-            return res.status(400).json({ message: "User already exists" });
+        // Check if the admin already exists
+        const existingAdmin = await Admin.findOne({ email: email.toLowerCase() });
+        if (existingAdmin) {
+            return res.status(400).json({ message: "Admin already exists" });
         }
 
         // Handle profile picture upload
@@ -55,40 +55,36 @@ export const addUser = async (req, res) => {
             }
         }
 
-        const isActive = role === 'homeowner';
         // convert email to lowercase
         const lowerCaseEmail = email.toLowerCase();
 
-        const newUser = new User({
+        const newAdmin = new Admin({
             name,
             email: lowerCaseEmail,
             password,
-            role,
             phone,
-            address,
             profilePictureUrl,
-            isActive
         });
 
-        await newUser.save();
-        // Return the user without password
-        const { password: _, ...userWithoutPassword } = newUser.toObject();
+        await newAdmin.save();
+        // Return the admin without password
+        const { password: _, ...adminWithoutPassword } = newAdmin.toObject();
         return res.status(201).json({
-            message: "User added successfully",
-            user: userWithoutPassword
+            message: "Admin added successfully",
+            admin: adminWithoutPassword
         });
 
     } catch (error) {
-        console.error('Error adding user:', error);
+        console.error('Error adding admin:', error);
         return res.status(500).json({ message: error.message });
     }
 };
 
 /**-----------------------------------------
  * @desc Signin 
- * @route POST /api/user/signin
+ * @route POST /api/admin/signin
  * @access Private
- * @role User
+ * @role Admin
  ------------------------------------------*/
 export const signin = async (req, res) => {
     const { email, password } = req.body;
@@ -105,27 +101,27 @@ export const signin = async (req, res) => {
     const lowerCaseEmail = email.toLowerCase();
 
     try {
-        // Try finding the user in Users
-        let user = await User.findOne({ email: lowerCaseEmail });
+        // Try finding the admin in Admins
+        let admin = await Admin.findOne({ email: lowerCaseEmail });
         let role = '';
 
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+        if (!admin) {
+            return res.status(404).json({ message: 'admin not found' });
         } else {
-            role = user.role;
+            role = 'admin';
         }
 
         // Check password
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await bcrypt.compare(password, admin.password);
         if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
 
-        user.lastLogin = Date.now();
+        admin.lastLogin = Date.now();
 
-        await user.save();
+        await admin.save();
 
         // Token payload
         const payload = {
-            id: user._id,
+            id: admin._id,
             role: role,
         };
 
@@ -144,34 +140,19 @@ export const signin = async (req, res) => {
 };
 
 /**-----------------------------------------
- * @desc Get all Users
- * @route GET /api/user
+ * @desc Get a single admin
+ * @route GET /api/admin/:id
  * @access Private
- * @role Admin
+ * @role  Admin
  ------------------------------------------*/
-export const getAllUsers = async (req, res) => {
-    try {
-        const users = await User.find().select("-password");
-        return res.status(200).json(users);
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
-    }
-};
-
-/**-----------------------------------------
- * @desc Get a single user
- * @route GET /api/user/:id
- * @access Public
- * @role  Admin, User
- ------------------------------------------*/
-export const getUser = async (req, res) => {
+export const getAdmin = async (req, res) => {
     const { id } = req.params;
     try {
-        const user = await User.findById(id).select("-password");
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
+        const admin = await Admin.findById(id).select("-password");
+        if (!admin) {
+            return res.status(404).json({ message: "Admin not found" });
         }
-        return res.status(200).json(user);
+        return res.status(200).json(admin);
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
@@ -179,15 +160,15 @@ export const getUser = async (req, res) => {
 
 /**-----------------------------------------
  * @desc Send OTP for resetting Password
- * @route POST /api/user/sendOTP
+ * @route POST /api/admin/sendOTP
  ------------------------------------------*/
 export const sendOTP = async (req, res) => {
     const { email } = req.body;
     const lowercaseEmail = email.toLowerCase();
-    const user = await User.findOne({ email: lowercaseEmail });
+    const admin = await Admin.findOne({ email: lowercaseEmail });
 
-    if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+    if (!admin) {
+        return res.status(404).json({ error: 'Admin not found' });
     }
 
     // Generate OTP (6-digit)
@@ -198,9 +179,9 @@ export const sendOTP = async (req, res) => {
     otpExpiry.setMinutes(otpExpiry.getMinutes() + 3);
 
     // Save OTP and expiry time in the database
-    user.otp = otp;
-    user.otpExpiry = otpExpiry;
-    await user.save();
+    admin.otp = otp;
+    admin.otpExpiry = otpExpiry;
+    await admin.save();
 
     // Send OTP via email
     const mailOptions = {
@@ -221,19 +202,19 @@ export const sendOTP = async (req, res) => {
 
 /**-----------------------------------------
  * @desc Confirm OTP
- * @route POST /api/user/confirmOTP
+ * @route POST /api/admin/confirmOTP
  ------------------------------------------*/
 export const confirmOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
         const lowercaseEmail = email.toLowerCase();
-        const user = await User.findOne({ email: lowercaseEmail });
+        const admin = await Admin.findOne({ email: lowercaseEmail });
 
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+        if (!admin) {
+            return res.status(404).json({ error: 'Admin not found' });
         }
 
-        if (user.otp !== otp || new Date() > user.otpExpiry) {
+        if (admin.otp !== otp || new Date() > admin.otpExpiry) {
             return res.status(401).json({ error: 'Invalid OTP' });
         }
 
@@ -244,10 +225,10 @@ export const confirmOTP = async (req, res) => {
 };
 
 /**-----------------------------------------
- * @desc Update User Password
- * @route PUT /api/user/update-password
+ * @desc Update Admin Password
+ * @route PUT /api/admin/update-password
  ------------------------------------------*/
-export const updateUserPassword = async (req, res) => {
+export const updateAdminPassword = async (req, res) => {
     const { email, newPassword, confirmPassword } = req.body;
 
     // Check if both fields are provided
@@ -269,15 +250,15 @@ export const updateUserPassword = async (req, res) => {
 
     try {
         const lowercaseEmail = email.toLowerCase();
-        const user = await User.findOne({ email: lowercaseEmail });
-
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+        const admin = await Admin.findOne({ email: lowercaseEmail });
+    
+        if (!admin) {
+            return res.status(404).json({ error: 'Admin not found' });
         }
 
-        user.password = newPassword; // hashing will happen automatically in pre-save
+        admin.password = newPassword; // hashing will happen automatically in pre-save
 
-        await user.save();
+        await admin.save();
 
         return res.status(200).json({ message: "Password updated successfully" });
     } catch (error) {
@@ -287,39 +268,38 @@ export const updateUserPassword = async (req, res) => {
 };
 
 /**-----------------------------------------
- * @desc Update a User
- * @route PUT /api/user/:id
- * @access Public
- * @role Admin, User
+ * @desc Update an Admin
+ * @route PUT /api/admin/:id
+ * @access Private
+ * @role Admin
  ------------------------------------------*/
-export const updateUser = async (req, res) => {
+export const updateAdmin = async (req, res) => {
     const { id } = req.params;
-    const { name, email, phone, address } = req.body;
+    const { name, email, phone } = req.body;
     console.log(req.body);
 
-    const user = await User.findById(id);
-    if (!user) {
-        return res.status(404).json({ message: "User not found" });
+    const admin = await Admin.findById(id);
+    if (!admin) {
+        return res.status(404).json({ message: "Admin not found" });
     }
 
     // Update only the fields that are provided
-    if (name) user.name = name;
+    if (name) admin.name = name;
     if (email) {
         if (!helpers.validateEmail(email)) {
             return res.status(400).json({ message: "Invalid email format" });
         }
-        user.email = email.toLowerCase();
+        admin.email = email.toLowerCase();
     }
     if (phone) {
         if (!helpers.validatePhone(phone)) {
             return res.status(400).json({ message: "Invalid phone number format" });
         }
-        user.phone = phone;
+        admin.phone = phone;
     }
-    if (address) user.address = address;
 
     try {
-        let profilePictureUrl = user.profilePictureUrl;
+        let profilePictureUrl = admin.profilePictureUrl;
 
         if (req.file) {
             try {
@@ -331,64 +311,13 @@ export const updateUser = async (req, res) => {
         }
 
         // If a new profile picture URL exists, update it
-        if (profilePictureUrl !== user.profilePictureUrl) {
-            user.profilePictureUrl = profilePictureUrl;
+        if (profilePictureUrl !== admin.profilePictureUrl) {
+            admin.profilePictureUrl = profilePictureUrl;
         }
 
-        await user.save();
-        return res.status(200).json({ message: "User updated successfully", user });
+        await admin.save();
+        return res.status(200).json({ message: "Admin updated successfully", admin });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
 };
-
-/**
- * -----------------------------------------
- * @desc    Activate a User
- * @route   PUT /api/user/activate/:id
- * @access  Private
- * @role    Admin
------------------------------------------*/
-export const activateUser = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const user = await User.findById(id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        if (user.isActive) {
-            return res.status(400).json({ message: "User is already activated." });
-        }
-
-        user.isActive = true;
-        await user.save();
-
-        return res.status(200).json({
-            message: "User activated successfully!",
-            user,
-        });
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
-    }
-};
-
-/**-----------------------------------------
- * @desc Delete a User
- * @route DELETE /api/user/:id
- * @access Private
- * @role Admin
- ------------------------------------------*/
-export const deleteUser = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const user = await User.findByIdAndDelete(id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        return res.status(200).json({ message: "User deleted successfully" });
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
-    }
-}

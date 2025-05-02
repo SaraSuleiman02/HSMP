@@ -6,6 +6,7 @@ import http from 'http';
 import { Server as socketIo } from 'socket.io';
 
 import userRoutes from './routes/userRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -27,6 +28,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/user', userRoutes); // User Routes
+app.use('/api/admin', adminRoutes); // Admin Routes
 
 
 
