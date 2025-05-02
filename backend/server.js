@@ -8,6 +8,7 @@ import { Server as socketIo } from 'socket.io';
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import professionalProfileRoutes from './routes/professionalProfileRoutes.js';
+import projectRoutes from './routes/projectRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -31,6 +32,7 @@ app.get('/', (req, res) => {
 app.use('/api/user', userRoutes); // User Routes
 app.use('/api/admin', adminRoutes); // Admin Routes
 app.use('/api/profile', professionalProfileRoutes); // Professional Profile Routes
+app.use('/api/project', projectRoutes); // Project Routes
 
 
 // Create HTTP server and pass the express app to it

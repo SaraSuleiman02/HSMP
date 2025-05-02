@@ -1,0 +1,343 @@
+import Project from "../models/Project.js";
+import User from "../models/User.js";
+import fs from "fs";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
+
+/**-----------------------------------------
+ *  @desc    Create a new project
+ *  @route   POST /api/project
+ *  @access  Private
+ *  @role    Homeowner
+ ------------------------------------------*/
+export const createProject = async (req, res) => {
+    try {
+        const {
+            title,
+            description,
+            category,
+            address,
+            budget,
+            deadline
+        } = req.body;
+
+        const homeownerId = req.user.id;
+
+        // Check if the User exists
+        const homeowner = await User.findById(homeownerId);
+        if (!homeowner || homeowner.role !== 'homeowner') {
+            return res.status(400).json({ message: "User not found or not authorized" });
+        }
+
+        // Validate required fields
+        if (!title || !address || !address.city) {
+            return res.status(400).json({ message: "Title and city are required" });
+        }
+
+        // Check files and upload them
+        const files = req.files || [];
+        const images = [];
+
+        for (const file of files) {
+            const imageUrl = await uploadToCloudinary(file.path);
+            fs.unlinkSync(file.path); // delete temp file
+            images.push(imageUrl);
+        }
+
+        const newProject = new Project({
+            homeownerId,
+            title,
+            description,
+            category,
+            address: {
+                street: address?.street || '',
+                city: address.city,
+                country: address?.country || 'Jordan'
+            },
+            budget: {
+                min: budget?.min,
+                max: budget?.max,
+                type: budget?.type
+            },
+            deadline,
+            images,
+        });
+
+        await newProject.save();
+
+        res.status(201).json({
+            message: "Project created successfully",
+            project: newProject
+        });
+    } catch (error) {
+        console.error("Error creating project:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+/**-----------------------------------------
+ *  @desc    Get all Projects
+ *  @route   GET /api/project
+ *  @access  Private
+ *  @role    Admin
+ ------------------------------------------*/
+export const getAllProjects = async (req, res) => {
+    try {
+        const projects = await Project.find()
+            .populate('homeownerId', 'name')
+            .populate('assignedProfessionalId', 'name');
+
+        res.status(200).json(projects);
+    } catch (error) {
+        console.error("Error fetching projects:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+/**-----------------------------------------
+ *  @desc    Get a Project by ID
+ *  @route   GET /api/project/:id
+ *  @access  Public
+ *  @role    Admin, Homeowner
+ ------------------------------------------*/
+export const getProjectById = async (req, res) => {
+    try {
+        const projectId = req.params.id;
+
+        const project = await Project.findById(projectId)
+            .populate('homeownerId', 'name')
+            .populate('assignedProfessionalId', 'name');
+
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        res.status(200).json(project);
+    } catch (error) {
+        console.error("Error fetching project:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+/**-----------------------------------------
+ *  @desc    Get all homeowner Projects
+ *  @route   GET /api/project/homeowner
+ *  @access  Private
+ *  @role    Homeowner
+ ------------------------------------------*/
+export const getHomeownerProjects = async (req, res) => {
+    try {
+        const homeownerId = req.user.id;
+
+        const projects = await Project.find({ homeownerId })
+            .populate('homeownerId', 'name')
+            .populate('assignedProfessionalId', 'name');
+
+        res.status(200).json({ projects });
+    } catch (error) {
+        console.error("Error fetching homeowner projects:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+/**-----------------------------------------
+ *  @desc    Get all professional Projects
+ *  @route   GET /api/project/professional
+ *  @access  Private
+ *  @role    professional
+ ------------------------------------------*/
+export const getProfessionalProjects = async (req, res) => {
+    try {
+        const professionalId = req.user.id;
+
+        const projects = await Project.find({ assignedProfessionalId: professionalId })
+            .populate('homeownerId', 'name')
+            .populate('assignedProfessionalId', 'name');
+
+        res.status(200).json({ projects });
+    } catch (error) {
+        console.error("Error fetching professional projects:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+/**-----------------------------------------
+ *  @desc    Hire a Professional
+ *  @route   PUT /api/project/hireProfessional/:id
+ *  @access  Private
+ *  @role    homeowner
+ ------------------------------------------*/
+export const hireProfessional = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { professionalId } = req.body;
+
+        const project = await Project.findById(id);
+        if (!project) {
+            return res.status(404).json({ message: 'Project not found' });
+        }
+
+        if (project.status !== 'Open') {
+            return res.status(400).json({ message: 'A projessional Already been hired!' });
+        }
+
+        // Check if the professional exists
+        const professional = await User.findById(professionalId);
+        if (!professional || professional.role !== 'professional') {
+            return res.status(404).json({ message: "Professional not found!" });
+        }
+
+        project.assignedProfessionalId = professionalId;
+        project.status = 'Assigned';
+        await project.save();
+
+        res.status(200).json({ message: 'Professional hired successfully', project });
+    } catch (error) {
+        console.error('Error hiring professional:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+/**-----------------------------------------
+ *  @desc   Update project
+ *  @route  PUT /api/project/:id
+ *  @access Private
+ *  @role   homeowner
+ ------------------------------------------*/
+export const updateProjectById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+
+        const project = await Project.findById(id);
+        if (!project) {
+            return res.status(404).json({ message: 'Project not found' });
+        }
+
+        // Handle image removal
+        const imagesToRemove = updates.imagesToRemove
+            ? JSON.parse(updates.imagesToRemove)
+            : [];
+
+        if (Array.isArray(imagesToRemove) && imagesToRemove.length > 0) {
+            project.images = project.images.filter(img => !imagesToRemove.includes(img));
+        }
+
+        // Handle new image uploads
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const imageUrl = await uploadToCloudinary(file.path);
+                fs.unlinkSync(file.path);
+                project.images.push(imageUrl); // Append, don’t replace
+            }
+        }
+
+        // Only update other fields provided
+        const updatableFields = [
+            'title',
+            'description',
+            'budget',
+            'address',
+            'deadline',
+            'category'
+        ];
+
+        updatableFields.forEach(field => {
+            if (updates[field] !== undefined) {
+                if (['budget', 'address'].includes(field) && typeof updates[field] === 'string') {
+                    project[field] = JSON.parse(updates[field]);
+                } else {
+                    project[field] = updates[field];
+                }
+            }
+        });
+
+        await project.save();
+
+        return res.status(200).json({
+            message: 'Project updated successfully!',
+            project,
+        });
+
+    } catch (error) {
+        console.error('Error updating project:', error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+/**-----------------------------------------
+ *  @desc   Start project
+ *  @route  PUT /api/project/start/:id
+ *  @access Private
+ *  @role   professional
+ ------------------------------------------*/
+export const startProject = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const project = await Project.findById(id);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found!" });
+        }
+
+        project.status = "In Progress";
+        await project.save();
+
+        return res.status(200).json({ message: "Project Started successfully!" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+/**-----------------------------------------
+ *  @desc   End project
+ *  @route  PUT /api/project/end/:id
+ *  @access Private
+ *  @role   professional
+ ------------------------------------------*/
+export const endProject = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const project = await Project.findById(id);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found!" });
+        }
+
+        project.status = "Completed";
+        await project.save();
+
+        return res.status(200).json({ message: "Project Ended successfully!" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+
+/**-----------------------------------------
+ *  @desc    Delete a project by ID
+ *  @route   DELETE /api/project/:id
+ *  @access  Private
+ *  @role    homeowner
+ ------------------------------------------*/
+export const deleteProjectById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const project = await Project.findById(id);
+        if (!project) {
+            return res.status(404).json({ message: 'Project not found' });
+        }
+
+        if (project.status !== 'Open') {
+            return res.status(403).json({ message: 'Only open projects can be deleted' });
+        }
+
+        await project.deleteOne();
+
+        res.status(200).json({ message: 'Project deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting project:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
