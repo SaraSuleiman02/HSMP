@@ -52,4 +52,8 @@ The server will run on `http://localhost:8000`
   - Mongoose
   - JWT Authentication
   - Bcrypt for password hashing
+  - Node mailer for sending OTP
+  - Cloudinary for photo upload
+  - Multer
+  - SocketIO for notifications
 
