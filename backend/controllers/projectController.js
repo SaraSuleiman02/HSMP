@@ -1,7 +1,9 @@
 import Project from "../models/Project.js";
 import User from "../models/User.js";
+import Bid from "../models/Bid.js";
 import fs from "fs";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import { getConnectedUsers } from '../utils/socket.js';
 
 /**-----------------------------------------
  *  @desc    Create a new project
@@ -118,7 +120,6 @@ export const getProjectById = async (req, res) => {
     }
 };
 
-
 /**-----------------------------------------
  *  @desc    Get all homeowner Projects
  *  @route   GET /api/project/homeowner
@@ -170,7 +171,7 @@ export const getProfessionalProjects = async (req, res) => {
 export const hireProfessional = async (req, res) => {
     try {
         const { id } = req.params;
-        const { professionalId } = req.body;
+        const { bidId } = req.body;
 
         const project = await Project.findById(id);
         if (!project) {
@@ -181,15 +182,29 @@ export const hireProfessional = async (req, res) => {
             return res.status(400).json({ message: 'A projessional Already been hired!' });
         }
 
+        // Check if the Bid exists
+        const bid = await Bid.findById(bidId);
+        if (!bid) {
+            return res.status(404).json({ message: "Bid not found!" });
+        }
+
         // Check if the professional exists
-        const professional = await User.findById(professionalId);
+        const professional = await User.findById(bid.professionalId);
         if (!professional || professional.role !== 'professional') {
             return res.status(404).json({ message: "Professional not found!" });
         }
 
-        project.assignedProfessionalId = professionalId;
+        project.assignedProfessionalId = bid.professionalId;
         project.status = 'Assigned';
         await project.save();
+
+        const socketId = getConnectedUsers().get(bid.professionalId.toString());
+        if (socketId) {
+            req.io.to(socketId).emit('hired', {
+                message: `You've been hired for project: ${project.title}`,
+                projectId: project._id
+            });
+        }
 
         res.status(200).json({ message: 'Professional hired successfully', project });
     } catch (error) {
@@ -312,7 +327,6 @@ export const endProject = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 }
-
 
 /**-----------------------------------------
  *  @desc    Delete a project by ID

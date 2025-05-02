@@ -4,11 +4,13 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
 import { Server as socketIo } from 'socket.io';
+import { configureSocket } from './utils/socket.js';
 
 import userRoutes from './routes/userRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import professionalProfileRoutes from './routes/professionalProfileRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
+import bidRoutes from './routes/bidRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -33,6 +35,7 @@ app.use('/api/user', userRoutes); // User Routes
 app.use('/api/admin', adminRoutes); // Admin Routes
 app.use('/api/profile', professionalProfileRoutes); // Professional Profile Routes
 app.use('/api/project', projectRoutes); // Project Routes
+app.use('/api/bid', bidRoutes); // Bid routes
 
 
 // Create HTTP server and pass the express app to it
@@ -42,20 +45,16 @@ const server = http.createServer(app);
 const io = new socketIo(server);
 
 // Socket.IO Connection Handler
-io.on('connection', (socket) => {
-    console.log('A user connected');
-
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
-    });
-
-    socket.emit('message', 'Hello from the server!');
-});
+configureSocket(io);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Something went wrong!' });
+});
+app.use((req, res, next) => {
+    req.io = io;
+    next();
 });
 
 const PORT = process.env.PORT || 5000;
