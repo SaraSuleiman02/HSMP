@@ -79,7 +79,7 @@ const projectSchema = mongoose.Schema({
     images: [{
         type: String,
     }],
-});
+}, { timestamps: true });
 
 const Project = mongoose.model('Project', projectSchema);
 export default Project;

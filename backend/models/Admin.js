@@ -31,7 +31,7 @@ const adminSchema = new mongoose.Schema({
     otpExpiry: {
         type: Date,
     }
-});
+}, { timestamps: true });
 
 // This will hash the password before saving it to the database
 adminSchema.pre('save', async function (next) {

@@ -59,7 +59,7 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ProfessionalProfile',
     },
-});
+}, { timestamps: true });
 
 // This will hash the password before saving it to the database
 userSchema.pre('save', async function (next) {

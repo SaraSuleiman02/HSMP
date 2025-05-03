@@ -26,7 +26,7 @@ const bidSchema = mongoose.Schema({
         enum: ['Submitted', 'Accepted'],
         default: 'Submitted',
     },
-});
+},{ timestamps: true });
 
 const Bid = mongoose.model('Bid', bidSchema);
 export default Bid;
