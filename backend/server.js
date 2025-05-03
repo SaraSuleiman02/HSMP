@@ -11,6 +11,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import professionalProfileRoutes from './routes/professionalProfileRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
 import bidRoutes from './routes/bidRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -35,7 +36,8 @@ app.use('/api/user', userRoutes); // User Routes
 app.use('/api/admin', adminRoutes); // Admin Routes
 app.use('/api/profile', professionalProfileRoutes); // Professional Profile Routes
 app.use('/api/project', projectRoutes); // Project Routes
-app.use('/api/bid', bidRoutes); // Bid routes
+app.use('/api/bid', bidRoutes); // Bid Routes
+app.use('/api/review', reviewRoutes); // Review Routes
 
 
 // Create HTTP server and pass the express app to it

@@ -53,6 +53,7 @@ const professionalProfileSchema = new mongoose.Schema({
     }],
     averageRating: {
         type: Number,
+        default: 1,
     },
 });
 
