@@ -28,12 +28,15 @@ HSMP/
 
 3. Create a `.env` file in the backend directory with the following variables:
    ```
-   PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/seagulls-tech
+   PORT=8000
+   MONGODB_URI=
    JWT_SECRET=your_jwt_secret_key_here
    CLOUDINARY_CLOUD_NAME=
    CLOUDINARY_API_KEY=
    CLOUDINARY_API_SECRET=
+   EMAIL_USER=
+   GMAIL_APP_PASSWORD=
+   FRONTEND_URL=
    ```
 
 4. Start the development server:
