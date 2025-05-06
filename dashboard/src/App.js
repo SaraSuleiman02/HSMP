@@ -9,6 +9,8 @@ import ProfilePage from "./pages/ProfilePage";
 import HomeownerPage from "./pages/HomeownerPage";
 import ProfessionalPage from "./pages/ProfessionalPage";
 
+import ReviewPage from "./pages/ReviewPage";
+
 function App() {
   return (
     <BrowserRouter>
@@ -40,6 +42,15 @@ function App() {
           element={
             <ProtectedRoute allowedPositions={['admin']}>
               <ProfessionalPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reviews"
+          element={
+            <ProtectedRoute allowedPositions={['admin']}>
+              <ReviewPage />
             </ProtectedRoute>
           }
         />
