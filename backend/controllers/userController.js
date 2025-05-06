@@ -344,12 +344,12 @@ export const updateUser = async (req, res) => {
 
 /**
  * -----------------------------------------
- * @desc    Activate a User
+ * @desc    Activate/ De-activate a User
  * @route   PUT /api/user/activate/:id
  * @access  Private
  * @role    Admin
 -----------------------------------------*/
-export const activateUser = async (req, res) => {
+export const toggleUserActivation = async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -358,19 +358,27 @@ export const activateUser = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        if (user.isActive) {
-            return res.status(400).json({ message: "User is already activated." });
-        }
-
-        user.isActive = true;
+        user.isActive = !user.isActive;
         await user.save();
 
+        const lowercaseEmail = user.email.toLowerCase();
+        const Activated = user.isActive ? "Activated" : "Deactivated";
+
+        const mailOptions = {
+            from: `"HSMP.JO" <${process.env.EMAIL_USER}>`,
+            to: lowercaseEmail,
+            subject: Activated,
+            text: `Your Account has been ${Activated}, now you ${Activated === 'Activated' ? 'can' : 'can\'t'} login to your account!`
+        };
+        await transporter.sendMail(mailOptions);
+
         return res.status(200).json({
-            message: "User activated successfully!",
+            message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully!`,
             user,
         });
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        console.error('Error toggling user activation:', error);
+        return res.status(500).json({ message: "Server error. Please try again later." });
     }
 };
 
