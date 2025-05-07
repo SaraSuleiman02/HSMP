@@ -8,7 +8,7 @@ import HomePageTen from "./pages/HomePageTen";
 import ProfilePage from "./pages/ProfilePage";
 import HomeownerPage from "./pages/HomeownerPage";
 import ProfessionalPage from "./pages/ProfessionalPage";
-
+import ProjectPage from "./pages/ProjectPage";
 import ReviewPage from "./pages/ReviewPage";
 
 function App() {
@@ -42,6 +42,15 @@ function App() {
           element={
             <ProtectedRoute allowedPositions={['admin']}>
               <ProfessionalPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute allowedPositions={['admin']}>
+              <ProjectPage />
             </ProtectedRoute>
           }
         />

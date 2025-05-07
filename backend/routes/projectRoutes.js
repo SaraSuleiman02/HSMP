@@ -26,7 +26,7 @@ router.put('/hireProfessional/:id', verifyToken, authorizePosition('homeowner'),
 router.put('/:id', verifyToken, authorizePosition('homeowner'), upload.array("images"), updateProjectById); // Update a project by ID
 router.put('/start/:id', verifyToken, authorizePosition('professional'), startProject); // Start a project by ID
 router.put('/end/:id', verifyToken, authorizePosition('professional'), endProject); // End a project by ID
-router.delete('/:id', verifyToken, authorizePosition('homeowner'), deleteProjectById); // Delete a project by ID
+router.delete('/:id', verifyToken, authorizePosition('admin','homeowner'), deleteProjectById); // Delete a project by ID
 
 
 

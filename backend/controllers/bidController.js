@@ -103,6 +103,33 @@ export const getAllBidsGroupedByProject = async (req, res) => {
 };
 
 /**-----------------------------------------
+ *  @desc   Get all bids for a specific project
+ *  @route  GET /api/bid/project/:projectId
+ *  @access Public
+ *  @role Admin, homeowner, professional
+ ------------------------------------------*/
+export const getBidsByProjectId = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+
+        const project = await Project.findById(projectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        const bids = await Bid.find({ projectId })
+        
+        .populate('professionalId', 'name')
+        .sort({ createdAt: -1 }); // Most recent first
+
+        return res.status(200).json(bids);
+    } catch (error) {
+        console.error("Error fetching bids by project:", error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+/**-----------------------------------------
  *  @desc   Update a Bid by ID
  *  @route  PUT /api/bid/:bidId
  *  @access Private 

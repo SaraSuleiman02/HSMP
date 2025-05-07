@@ -347,9 +347,13 @@ export const deleteProjectById = async (req, res) => {
             return res.status(403).json({ message: 'Only open projects can be deleted' });
         }
 
+        // Delete all bids associated with this project
+        await Bid.deleteMany({ projectId: id });
+
+        // Delete the project itself
         await project.deleteOne();
 
-        res.status(200).json({ message: 'Project deleted successfully' });
+        res.status(200).json({ message: 'Project and associated bids deleted successfully' });
     } catch (error) {
         console.error('Error deleting project:', error);
         res.status(500).json({ message: 'Server error' });

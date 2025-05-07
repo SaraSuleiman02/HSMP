@@ -176,6 +176,20 @@ const MasterLayout = ({ children }) => {
                 </NavLink>
               </li>
 
+              {/* projects */}
+              <li>
+                <NavLink
+                  to='/projects'
+                  className={(navData) => (navData.isActive ? "active-page" : "")}
+                >
+                  <Icon
+                    icon='line-md:folder-twotone'
+                    className='menu-icon'
+                  />
+                  <span>Projects</span>
+                </NavLink>
+              </li>
+
               {/* reviews */}
               <li>
                 <NavLink

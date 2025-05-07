@@ -5,7 +5,8 @@ import axiosInstance from "../axiosConfig";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaSortUp, FaSortDown, FaSort } from 'react-icons/fa';
-import ProfileModal from './modals/ProfileModal';
+import ProjectMoreInfoModal from './modals/ProjectMoreInfoModal';
+import ProjectBidsModal from './modals/ProjectBidsModal';
 import DeleteModal from './modals/DeleteModal';
 
 const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
@@ -13,55 +14,50 @@ const GlobalFilter = ({ globalFilter, setGlobalFilter }) => (
         className="form-control w-30"
         value={globalFilter || ''}
         onChange={e => setGlobalFilter(e.target.value)}
-        placeholder="Search Professionals ..."
+        placeholder="Search Projects ..."
     />
 );
 
-const ProfessionalLayer = () => {
-    const [professionals, setProfessionals] = useState([]);
+const ProjectLayer = () => {
+    const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [profileId, setProfileId] = useState(null);
-    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [moreInfoProject, setMoreInfoProject] = useState(null);
+    const [showMoreInfo, setShowMoreInfo] = useState(false);
+    const [projectId, setProjectId] = useState(null);
+    const [showBidModal, setShowBidModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [selectedProfessional, setSelectedProfessional] = useState(null);
+    const [selectedProject, setSelectedProject] = useState(null);
 
     useEffect(() => {
-        fetchProfessionals();
+        fetchProjects();
     }, []);
 
-    const fetchProfessionals = async () => {
+    const fetchProjects = async () => {
         try {
-            const response = await axiosInstance.get('/user');
-            const professionalsOnly = response.data.filter(user => user.role === 'professional');
-            setProfessionals(professionalsOnly);
+            const response = await axiosInstance.get('/project');
+            setProjects(response.data);
             setLoading(false);
         } catch (error) {
-            console.error('Error fetching Professionals:', error);
-            toast.error('Failed to fetch Professionals');
+            console.error('Error fetching Projects:', error);
+            toast.error('Failed to fetch Projects');
             setLoading(false);
         }
     };
 
-    const handleDeleteProfessional = (professional) => {
-        setSelectedProfessional(professional);
+    const handleDeleteProject = (project) => {
+        setSelectedProject(project);
         setShowDeleteModal(true);
     };
 
-    const handleToggleActivation = async (userId) => {
-        try {
-            const res = await axiosInstance.put(`/user/activate/${userId}`);
-            toast.success(res.data.message);
-            fetchProfessionals();
-        } catch (error) {
-            console.error('Error toggling activation:', error);
-            toast.error('Error togglig the activation!');
-        }
+    const handleViewMoreInfo = (project) => {
+        setMoreInfoProject(project);
+        setShowMoreInfo(true);
     };
 
-    const handleViewProfile = (profileId) => {
-        setProfileId(profileId);
-        setShowProfileModal(true);
-    };
+    const handleViewBids = (projectId) => {
+        setProjectId(projectId);
+        setShowBidModal(true);
+    }
 
     const columns = React.useMemo(() => [
         {
@@ -69,87 +65,58 @@ const ProfessionalLayer = () => {
             accessor: (_row, i) => i + 1,
         },
         {
-            Header: 'Photo',
-            accessor: 'profilePictureUrl',
-            Cell: ({ value }) => (
-                <img
-                    src={value}
-                    alt="Profile"
-                    style={{ width: '40px', height: '40px', borderRadius: '50%' }}
-                />
-            ),
+            Header: 'Home Owner',
+            accessor: row => row.homeownerId?.name,
+            Cell: ({ value }) => {
+                if (!value) return '—';
+                return value;
+            },
         },
         {
-            Header: 'Name',
-            accessor: 'name',
-        },
-        {
-            Header: 'Email',
-            accessor: 'email',
-        },
-        {
-            Header: 'Phone',
-            accessor: 'phone',
+            Header: 'Category',
+            accessor: 'category',
         },
         {
             Header: 'Address',
             accessor: 'address',
             Cell: ({ value }) => {
                 if (!value) return '—';
-                const { street, city } = value;
-                return `${street}, ${city}`;
+                const { city, country } = value;
+                return `${city}, ${country}`;
             },
         },
         {
-            Header: 'Activation Status',
-            accessor: row => row.isActive,
-            Cell: ({ value, row }) => {
-                const userId = row.original._id;
-
-                return (
-                    <div className="dropdown">
-                        <span
-                            className={`badge ${value ? 'bg-success' : 'bg-danger'} dropdown-toggle`}
-                            data-bs-toggle="dropdown"
-                            role="button"
-                            style={{ cursor: 'pointer' }}
-                        >
-                            {value ? 'Active' : 'Not Active'}
-                        </span>
-                        <ul className="dropdown-menu">
-                            <li>
-                                <button className="dropdown-item" onClick={() => handleToggleActivation(userId)}>
-                                    {value ? 'Deactivate' : 'Activate'}
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-                );
-            }
+            Header: 'Status',
+            accessor: row => row.status,
+            Cell: ({ value }) => (
+                <span className={`badge ${value === 'Open' ? 'bg-danger' :
+                    value === 'In Progress' ? 'bg-secondary' :
+                        value === 'Assigned' ? 'bg-success' : 'bg-warning'}`}>
+                    {value}
+                </span>
+            ),
         },
         {
-            Header: 'Profile',
-            accessor: row => row.professionalProfileId,
-            Cell: ({ value }) => {
-                if (!value) return '—';
-
-                return (
-                    <button
-                        className="btn btn-sm btn-primary"
-                        onClick={() => handleViewProfile(value)}
-                    >
-                        View
-                    </button>
-                );
-            }
+            Header: 'More Info',
+            Cell: ({ row }) => (
+                <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => handleViewMoreInfo(row.original)}
+                >
+                    View
+                </button>
+            ),
         },
         {
-            Header: 'Last Login',
-            accessor: 'lastLogin',
-            Cell: ({ value }) => {
-                if (!value) return '—';
-                return new Date(value).toLocaleDateString()
-            },
+            Header: 'Bids',
+            Cell: ({ row }) => (
+                <button
+                    className="btn btn-sm btn-secondary"
+                    onClick={() => handleViewBids(row.original._id)}
+                >
+                    View
+                </button>
+            ),
         },
         {
             Header: 'Delete',
@@ -157,7 +124,7 @@ const ProfessionalLayer = () => {
                 <div className="text-center">
                     <button
                         className="btn btn-sm btn-danger"
-                        onClick={() => handleDeleteProfessional(row.original)}
+                        onClick={() => handleDeleteProject(row.original)}
                     >
                         <Icon icon="mdi:delete" />
                     </button>
@@ -174,14 +141,14 @@ const ProfessionalLayer = () => {
         prepareRow,
         setGlobalFilter,
         state,
-    } = useTable({ columns, data: professionals }, useGlobalFilter, useSortBy);
+    } = useTable({ columns, data: projects }, useGlobalFilter, useSortBy);
 
     return (
         <div className="card basic-data-table">
             <ToastContainer />
             <div className="card-header">
                 <div className="d-flex justify-content-between">
-                    <h5 className='card-title mb-0 mt-3'>Professionals</h5>
+                    <h5 className='card-title mb-0 mt-3'>Projects</h5>
 
                     <GlobalFilter
                         globalFilter={state.globalFilter}
@@ -193,8 +160,8 @@ const ProfessionalLayer = () => {
             <div className="card-body p-0">
                 {loading ? (
                     <div className="text-center p-4">Loading...</div>
-                ) : professionals.length === 0 ? (
-                    <div className="text-center p-4">No professionals found</div>
+                ) : projects.length === 0 ? (
+                    <div className="text-center p-4">No projects found</div>
                 ) : (
                     <div className="table-responsive">
                         <table className="table bordered-table mb-0" {...getTableProps()}>
@@ -237,22 +204,30 @@ const ProfessionalLayer = () => {
                 )}
             </div>
 
-            {selectedProfessional && (
+            {selectedProject && (
                 <DeleteModal
                     show={showDeleteModal}
                     handleClose={() => setShowDeleteModal(false)}
-                    id={selectedProfessional._id}
-                    fetchData={fetchProfessionals}
-                    title="Professional"
-                    route="user"
+                    id={selectedProject._id}
+                    fetchData={fetchProjects}
+                    title="Project"
+                    route="project"
                 />
             )}
 
-            {profileId && (
-                <ProfileModal
-                    show={showProfileModal}
-                    profileId={profileId}
-                    onClose={() => setShowProfileModal(false)}
+            {moreInfoProject && (
+                <ProjectMoreInfoModal
+                    show={showMoreInfo}
+                    project={moreInfoProject}
+                    onClose={() => setShowMoreInfo(false)}
+                />
+            )}
+
+            {projectId && (
+                <ProjectBidsModal
+                    show={showBidModal}
+                    projectId={projectId}
+                    onClose={() => setShowBidModal(false)}
                 />
             )}
 
@@ -260,4 +235,4 @@ const ProfessionalLayer = () => {
     );
 };
 
-export default ProfessionalLayer; 
+export default ProjectLayer; 
