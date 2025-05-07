@@ -3,27 +3,27 @@ import { Link } from "react-router-dom";
 import axiosInstance from "../../axiosConfig";
 import { Icon } from "@iconify/react";
 
-const TopTechnicians = () => {
-  const [technicians, setTechnicians] = useState([]);
+const TopProfessionals = () => {
+  const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTechnicians = async () => {
+    const fetchProfessionals = async () => {
       try {
-        const response = await axiosInstance.get("/ticket/tech");
-        // Sort technicians by closedTicketsCount in descending order and take top 5
-        const sortedTechnicians = response.data
-          .sort((a, b) => b.closedTicketsCount - a.closedTicketsCount)
+        const response = await axiosInstance.get("/project/professionals/assignment-count");
+        // Sort professionals by assignmentCount in descending order and take top 5
+        const sortedProfessionals = response.data
+          .sort((a, b) => b.assignmentCount - a.assignmentCount)
           .slice(0, 7);
-        setTechnicians(sortedTechnicians);
+        setProfessionals(sortedProfessionals);
       } catch (error) {
-        console.error("Error fetching technicians:", error);
+        console.error("Error fetching professionals:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTechnicians();
+    fetchProfessionals();
   }, []);
 
   return (
@@ -31,9 +31,9 @@ const TopTechnicians = () => {
       <div className='card h-100'>
         <div className='card-header'>
           <div className='d-flex align-items-center flex-wrap gap-2 justify-content-between'>
-            <h6 className='mb-2 fw-bold text-lg mb-0'>Top Technicians</h6>
+            <h6 className='mb-2 fw-bold text-lg mb-0'>Top Professionals</h6>
             <Link
-              to='/technicians'
+              to='/professionals'
               className='text-primary-600 hover-text-primary d-flex align-items-center gap-1'
             >
               View All
@@ -47,8 +47,8 @@ const TopTechnicians = () => {
               <thead>
                 <tr>
                   <th scope='col' className="text-center">Rank</th>
-                  <th scope='col' className="text-center">Technician</th>
-                  <th scope='col' className="text-center">Closed Tickets</th>
+                  <th scope='col' className="text-center">Professional</th>
+                  <th scope='col' className="text-center">Assignment Count</th>
                 </tr>
               </thead>
               <tbody>
@@ -58,23 +58,23 @@ const TopTechnicians = () => {
                       <Icon icon="eos-icons:loading" className="icon" />
                     </td>
                   </tr>
-                ) : technicians.length === 0 ? (
+                ) : professionals.length === 0 ? (
                   <tr>
-                    <td colSpan="3" className="text-center">No technicians found</td>
+                    <td colSpan="3" className="text-center">No professionals found</td>
                   </tr>
                 ) : (
-                  technicians.map((tech, index) => (
+                  professionals.map((professional, index) => (
                     <tr key={index}>
                       <td className="text-center">
                         <span className='text-secondary-light'>{index + 1}</span>
                       </td>
                       <td className="text-center">
                         <span className='text-secondary-light'>
-                          {tech.techName}
+                          {professional.name}
                         </span>
                       </td>
                       <td className="text-center">
-                        <span className='text-secondary-light'>{tech.closedTicketsCount}</span>
+                        <span className='text-secondary-light'>{professional.assignmentCount}</span>
                       </td>
                     </tr>
                   ))
@@ -88,4 +88,4 @@ const TopTechnicians = () => {
   );
 };
 
-export default TopTechnicians;
+export default TopProfessionals;

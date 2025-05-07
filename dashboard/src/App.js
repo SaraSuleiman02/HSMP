@@ -24,7 +24,7 @@ function App() {
           path="/"
           element={
             <ProtectedRoute allowedPositions={['admin']}>
-              {/* <HomePageTen /> */}
+              <HomePageTen />
             </ProtectedRoute>
           }
         />

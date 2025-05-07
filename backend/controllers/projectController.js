@@ -163,6 +163,41 @@ export const getProfessionalProjects = async (req, res) => {
 };
 
 /**-----------------------------------------
+ *  @desc    Get all professionals and how many times they were assigned to a project
+ *  @route   GET /api/project/professionals/assignment-count
+ *  @access  Private
+ *  @role    Admin
+ ------------------------------------------*/
+ export const getProfessionalsWithAssignmentCount = async (req, res) => {
+    try {
+        const professionals = await User.aggregate([
+            {
+                $match: { role: "professional" }
+            },
+            {
+                $lookup: {
+                    from: "projects",
+                    localField: "_id",
+                    foreignField: "assignedProfessionalId",
+                    as: "assignedProjects"
+                }
+            },
+            {
+                $project: {
+                    name: 1,
+                    assignmentCount: { $size: "$assignedProjects" }
+                }
+            }
+        ]);
+
+        res.status(200).json(professionals);
+    } catch (error) {
+        console.error("Error fetching professional assignment counts:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+/**-----------------------------------------
  *  @desc    Hire a Professional
  *  @route   PUT /api/project/hireProfessional/:id
  *  @access  Private

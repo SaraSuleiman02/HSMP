@@ -4,43 +4,49 @@ import ReactApexChart from "react-apexcharts";
 import axiosInstance from "../../axiosConfig";
 
 const OverallReport = () => {
-  const [cleaningTickets, setCleaningTickets] = useState([]);
-  const [maintenanceTickets, setMaintenanceTickets] = useState([]);
-  const [accidentTickets, setAccidentTickets] = useState([]);
+  const [professionals, setProfessionals] = useState([]);
+  const [homeOwners, setHomeOwners] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTickets = async () => {
-      try {
-        setLoading(true);
-        const [cleaningRes, maintenanceRes, accidentRes] = await Promise.all([
-          axiosInstance.get('/ticket/cleaning-tickets'),
-          axiosInstance.get('/ticket/maintenance-tickets'),
-          axiosInstance.get('/ticket/accident-tickets')
-        ]);
+    try {
+      const fetchHomeOwner = async () => {
+        try {
+          const response = await axiosInstance.get('/user');
+          const homeownersOnly = response.data.filter(user => user.role === 'homeowner');
+          setHomeOwners(homeownersOnly);
+        } catch (error) {
+          console.error('Error fetching home owners count:', error);
+        }
+      };
 
-        setCleaningTickets(cleaningRes.data);
-        setMaintenanceTickets(maintenanceRes.data);
-        setAccidentTickets(accidentRes.data);
-      } catch (error) {
-        console.error('Error fetching tickets:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTickets();
+      const fetchProfessional = async () => {
+        try {
+          const response = await axiosInstance.get('/user');
+          const profssionalsOnly = response.data.filter(user => user.role === 'professional');
+          setProfessionals(profssionalsOnly);
+        } catch (error) {
+          console.error('Error fetching professionals count:', error);
+        }
+      };
+      fetchHomeOwner();
+      fetchProfessional();
+    } catch (error) {
+      console.error('Error fetching usres:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const totalTickets = cleaningTickets.length + maintenanceTickets.length + accidentTickets.length;
-  
+  const totalUsers = professionals.length + homeOwners.length;
+
   const userOverviewDonutChartOptionsTwo = {
     chart: {
       type: 'donut',
       height: 270,
     },
-    labels: ['Cleaning', 'Maintenance', 'Accident'],
-    colors: ['#9333EA', '#22C55E', '#EAB308'],
+    labels: ['Home Owners', 'Professionals'],
+    colors: ['#9333EA', '#22C55E'],
     legend: {
       show: false
     },
@@ -61,7 +67,7 @@ const OverallReport = () => {
               fontSize: '16px',
               fontWeight: 600,
               color: '#111827',
-              formatter: function(val) {
+              formatter: function (val) {
                 return Number(val).toFixed(1) + '%';
               }
             },
@@ -71,8 +77,8 @@ const OverallReport = () => {
               fontSize: '14px',
               fontWeight: 500,
               color: '#6B7280',
-              formatter: function(w) {
-                return totalTickets;
+              formatter: function (w) {
+                return totalUsers;
               }
             }
           }
@@ -84,17 +90,16 @@ const OverallReport = () => {
     },
     tooltip: {
       y: {
-        formatter: function(val) {
+        formatter: function (val) {
           return Number(val).toFixed(1) + '%';
         }
       }
     }
   };
 
-  const userOverviewDonutChartSeriesTwo = totalTickets > 0 ? [
-    (cleaningTickets.length / totalTickets) * 100,
-    (maintenanceTickets.length / totalTickets) * 100,
-    (accidentTickets.length / totalTickets) * 100
+  const userOverviewDonutChartSeriesTwo = totalUsers > 0 ? [
+    (professionals.length / totalUsers) * 100,
+    (homeOwners.length / totalUsers) * 100
   ] : [0, 0, 0];
 
   return (
@@ -102,7 +107,7 @@ const OverallReport = () => {
       <div className='card h-100'>
         <div className='card-header'>
           <div className='d-flex align-items-center flex-wrap gap-2 justify-content-between'>
-            <h6 className='mb-2 fw-bold text-lg'>Ticket Distribution</h6>
+            <h6 className='mb-2 fw-bold text-lg'>Users Distribution</h6>
           </div>
         </div>
         <div className='card-body p-24'>
@@ -122,15 +127,11 @@ const OverallReport = () => {
           <div className='d-flex flex-wrap gap-20 justify-content-center mt-48'>
             <div className='d-flex align-items-center gap-8'>
               <span className='w-16-px h-16-px radius-2 bg-lilac-600' />
-              <span className='text-secondary-light'>Cleaning: {cleaningTickets.length}</span>
+              <span className='text-secondary-light'>Home Owners: {homeOwners.length}</span>
             </div>
             <div className='d-flex align-items-center gap-8'>
               <span className='w-16-px h-16-px radius-2 bg-success-600' />
-              <span className='text-secondary-light'>Maintenance: {maintenanceTickets.length}</span>
-            </div>
-            <div className='d-flex align-items-center gap-8'>
-              <span className='w-16-px h-16-px radius-2 bg-warning-600' />
-              <span className='text-secondary-light'>Accident: {accidentTickets.length}</span>
+              <span className='text-secondary-light'>Professionals: {professionals.length}</span>
             </div>
           </div>
         </div>

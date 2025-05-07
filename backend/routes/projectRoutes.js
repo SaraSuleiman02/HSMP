@@ -5,6 +5,7 @@ import {
     getProjectById,
     getHomeownerProjects,
     getProfessionalProjects,
+    getProfessionalsWithAssignmentCount,
     hireProfessional,
     updateProjectById,
     startProject,
@@ -21,7 +22,7 @@ router.post('/', verifyToken, authorizePosition('homeowner'),upload.array("image
 router.get('/', verifyToken, authorizePosition('admin'), getAllProjects); // Get All Projects
 router.get('/homeowner', verifyToken, authorizePosition('homeowner'), getHomeownerProjects); // Get all homeowner Projects
 router.get('/professional', verifyToken, authorizePosition('professional'), getProfessionalProjects); // Get all Profesional Projects
-router.get('/:id', verifyToken, getProjectById); // Get a Project by ID
+router.get('/professionals/assignment-count', verifyToken, authorizePosition('admin'), getProfessionalsWithAssignmentCount); // Get all Professionals with assignment count
 router.put('/hireProfessional/:id', verifyToken, authorizePosition('homeowner'), hireProfessional); // Hire a Professional
 router.put('/:id', verifyToken, authorizePosition('homeowner'), upload.array("images"), updateProjectById); // Update a project by ID
 router.put('/start/:id', verifyToken, authorizePosition('professional'), startProject); // Start a project by ID

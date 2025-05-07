@@ -16,7 +16,7 @@ const DashBoardLayerTen = () => {
       <UsersChart />
 
 
-      {/* TopCustomer */}
+      {/* TopProfessional */}
       <TopCustomer />
 
       {/* OverallReport */}

@@ -3,23 +3,24 @@ import { Link } from "react-router-dom";
 import axiosInstance from '../../axiosConfig';
 
 const UsersChart = () => {
-  const [techs, setTechs] = useState([]);
+  const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
-  const MAX_DISPLAY_TECHS = 7; // Maximum number of technicians to display
+  const MAX_DISPLAY_PROFESSIONALS = 7; // Maximum number of professionals to display
 
   useEffect(() => {
-    const fetchTechs = async () => {
+    const fetchProfessionals = async () => {
       try {
-        const response = await axiosInstance.get('/tech');
-        setTechs(response.data.techs);
+        const response = await axiosInstance.get('/user');
+        const professionalsOnly = response.data.filter(user => user.role === 'professional');
+        setProfessionals(professionalsOnly);
       } catch (error) {
-        console.error('Error fetching techs:', error);
+        console.error('Error fetching professionals:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTechs();
+    fetchProfessionals();
   }, []);
 
   return (
@@ -27,9 +28,9 @@ const UsersChart = () => {
       <div className='card h-100'>
         <div className='card-header border-bottom'>
           <div className='d-flex align-items-center flex-wrap gap-2 justify-content-between'>
-            <h6 className='mb-2 fw-bold text-lg mb-0'>Technicians</h6>
+            <h6 className='mb-2 fw-bold text-lg mb-0'>Professionals</h6>
             <Link
-              to='/technicians'
+              to='/professionals'
               className='text-primary-600 hover-text-primary d-flex align-items-center gap-1'
             >
               View All
@@ -44,7 +45,7 @@ const UsersChart = () => {
           <div className='d-flex flex-column gap-24'>
             {loading ? (
               // Loading skeleton - shows exactly 6 items
-              Array(MAX_DISPLAY_TECHS).fill(0).map((_, index) => (
+              Array(MAX_DISPLAY_PROFESSIONALS).fill(0).map((_, index) => (
                 <div key={index} className='d-flex align-items-center justify-content-between gap-3'>
                   <div className='d-flex align-items-center'>
                     <div className='w-40-px h-40-px rounded-circle bg-neutral-200 animate-pulse' />
@@ -57,28 +58,25 @@ const UsersChart = () => {
                 </div>
               ))
             ) : (
-              // Display only first 6 technicians
-              techs.slice(0, MAX_DISPLAY_TECHS).map((tech, index) => (
+              // Display only first 6 professionals
+              professionals.slice(0, MAX_DISPLAY_PROFESSIONALS).map((professional, index) => (
                 <div key={index} className='d-flex align-items-center justify-content-between gap-3'>
                   <div className='d-flex align-items-center'>
                     <img
-                      src={tech.photo || 'assets/images/default-avatar.png'}
-                      alt={tech.name}
+                      src={professional.profilePictureUrl || 'assets/images/default-avatar.png'}
+                      alt={professional.name}
                       className='w-40-px h-40-px rounded-circle flex-shrink-0 me-12 overflow-hidden'
                       onError={(e) => {
                         e.target.src = 'assets/images/default-avatar.png';
                       }}
                     />
                     <div className='flex-grow-1'>
-                      <h6 className='text-md mb-0'>{tech.name}</h6>
+                      <h6 className='text-md mb-0'>{professional.name}</h6>
                       <span className='text-sm text-secondary-light fw-normal'>
-                        {tech.position || 'Technician'}
+                        Professional
                       </span>
                     </div>
                   </div>
-                  {/* <span className='text-success-main fw-medium text-md'>
-                    Active
-                  </span> */}
                 </div>
               ))
             )}
