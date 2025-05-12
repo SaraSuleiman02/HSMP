@@ -188,7 +188,7 @@ export const sendOTP = async (req, res) => {
         from: `"HSMP.JO" <${process.env.EMAIL_USER}>`,
         to: lowercaseEmail,
         subject: 'Password Reset OTP',
-        text: `Your OTP for resetting your password is: ${otp}. This OTP is valid for 10 minutes.`
+        text: `Your OTP for resetting your password is: ${otp}. This OTP is valid for 3 minutes.`
     };
 
     try {
