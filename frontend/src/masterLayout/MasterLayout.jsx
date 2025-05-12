@@ -4,9 +4,10 @@ import { Navbar, Nav, Container, Button, Row, Col } from 'react-bootstrap';
 const MasterLayout = ({ children }) => {
     const [scrolled, setScrolled] = useState(false);
 
+    // This effect will add a scroll event listener to the window to change the navbar style based on scroll position
     useEffect(() => {
         const handleScroll = () => {
-            const threshold = window.innerHeight * 0.6;
+            const threshold = window.innerHeight * 0.1;
             setScrolled(window.scrollY > threshold);
         };
 
@@ -36,7 +37,7 @@ const MasterLayout = ({ children }) => {
             </Navbar>
             <main style={{ minHeight: '100vh' }}>{children}</main>
 
-            <footer className="footer text-light py-1" style={{ backgroundColor: '#e5ebfb' }}>
+            <footer className="footer text-light py-1 mt-4" style={{ background: 'linear-gradient(to bottom, #c0d1f9, #dce6fd)' }}>
                 <Container>
                     <Row>
                         <Col className="text-center mt-3">

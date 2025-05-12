@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import Cookie from 'js-cookie';
 import axiosInstance from '../axiosConfig';
 import { jwtDecode } from 'jwt-decode';
-import { io } from 'socket.io-client';
 
 const AuthContext = createContext(null);
 
@@ -18,8 +17,6 @@ export const AuthProvider = ({ children }) => {
     isActive: null,
   });
   const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState(null);
-  const [notifications, setNotifications] = useState([]);  // New state for notifications
 
   const fetchUserData = async (userId, role) => {
     try {
@@ -33,7 +30,6 @@ export const AuthProvider = ({ children }) => {
       };
 
       const endpoint = `/user/${userId}`;
-
       const response = await axiosInstance.get(endpoint, config);
       if (!response.data) return;
 
@@ -53,13 +49,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Check if there are any notifications in localStorage
-    const savedNotifications = JSON.parse(localStorage.getItem('notifications')) || [];
-    setNotifications(savedNotifications);
-
     const initializeUser = async () => {
       const token = Cookie.get('token');
-
       if (!token) {
         setLoading(false);
         return;
@@ -68,50 +59,12 @@ export const AuthProvider = ({ children }) => {
       try {
         const decoded = jwtDecode(token);
         const { id, role } = decoded;
-
-        await fetchUserData(id, role); // to make sure user is fetched
-
-        const socketInstance = io('http://localhost:8000');
-        setSocket(socketInstance);
-
-        socketInstance.on('connect', () => {
-          console.log('Socket connected:', socketInstance.id);
-          socketInstance.emit('register', { role, userId: id });
-        });
-
-        // Listen for new notifications from the server
-        socketInstance.on('new-notification', (notification) => {
-          // Ensure that the notification is valid and has a notifID
-          if (notification.notifID && notification.title && notification.message) {
-            setNotifications((prevNotifications) => {
-              // Check if the notification already exists (based on notifID)
-              const exists = prevNotifications.some(
-                (notif) => notif.notifID === notification.notifID
-              );
-
-              // If it doesn't exist, add it
-              if (!exists) {
-                const updatedNotifications = [...prevNotifications, notification];
-                localStorage.setItem('notifications', JSON.stringify(updatedNotifications)); // Save to localStorage
-                return updatedNotifications;
-              }
-
-              // If it exists, return the previous notifications without adding the duplicate
-              return prevNotifications;
-            });
-
-            // Play the notification sound when a new notification is received
-            const notificationSound = new Audio('/notification.mp3');
-            notificationSound.play();
-          } else {
-            console.log('Received invalid notification, ignoring...', notification);
-          }
-        });
+        await fetchUserData(id, role);
       } catch (error) {
         console.error('Error initializing user:', error);
         Cookie.remove('token');
       } finally {
-        setLoading(false); // only after everything's done
+        setLoading(false);
       }
     };
 
@@ -120,55 +73,13 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axiosInstance.post('/user/signin', {
-        email,
-        password,
-      });
-
+      const response = await axiosInstance.post('/user/signin', { email, password });
       Cookie.set('token', response.data.token, { expires: 1 });
 
       const decoded = jwtDecode(response.data.token);
       const { id, role } = decoded;
 
       await fetchUserData(id, role);
-
-      const socketInstance = io('http://localhost:8000');
-      setSocket(socketInstance);
-
-      socketInstance.on('connect', () => {
-        console.log('Socket connected:', socketInstance.id);
-        socketInstance.emit('register', { role, userId: id });
-      });
-
-      // Listen for new notifications from the server
-      socketInstance.on('new-notification', (notification) => {
-        // Ensure that the notification is valid and has a notifID
-        if (notification.notifID && notification.title && notification.message) {
-          setNotifications((prevNotifications) => {
-            // Check if the notification already exists (based on notifID)
-            const exists = prevNotifications.some(
-              (notif) => notif.notifID === notification.notifID
-            );
-
-            // If it doesn't exist, add it
-            if (!exists) {
-              const updatedNotifications = [...prevNotifications, notification];
-              localStorage.setItem('notifications', JSON.stringify(updatedNotifications)); // Save to localStorage
-              return updatedNotifications;
-            }
-
-            // If it exists, return the previous notifications without adding the duplicate
-            return prevNotifications;
-          });
-
-          // Play the notification sound when a new notification is received
-          const notificationSound = new Audio('/notification.mp3');
-          notificationSound.play();
-        } else {
-          console.log('Received invalid notification, ignoring...', notification);
-        }
-      });
-
       return response.data;
     } catch (error) {
       console.error('Login error:', error);
@@ -188,27 +99,13 @@ export const AuthProvider = ({ children }) => {
       address: null,
       isActive: null,
     });
-    if (socket) {
-      socket.disconnect();
-      console.log('Socket disconnected on logout');
-    }
-  };
-
-  const removeNotification = (notifID) => {
-    // Remove the notification with the given notifID
-    const updatedNotifications = notifications.filter((notif) => notif.notifID !== notifID);
-    setNotifications(updatedNotifications);
-    localStorage.setItem('notifications', JSON.stringify(updatedNotifications)); // Update localStorage
   };
 
   const value = {
     user,
     loading,
-    socket,
-    notifications,
     login,
     logout,
-    removeNotification,
     isAuthenticated: !!user?.id,
     updateUser: (newUserData) => {
       setUser((prev) => ({
