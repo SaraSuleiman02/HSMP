@@ -25,17 +25,8 @@ const projectSchema = mongoose.Schema({
             "Roofing",
             "Landscaping",
             "Gardening",
-            "Pest Control",
             "Appliance Repair",
             "Home Cleaning",
-            "Security System Installation",
-            "Window & Door Installation",
-            "Flooring Installation",
-            "Masonry",
-            "Drywall Repair",
-            "Waterproofing",
-            "Garage Door Repair",
-            "Pool Maintenance"
         ],
     },
     address: {

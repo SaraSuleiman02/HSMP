@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import ProfessionalProfile from '../models/ProfessionalProfile.js';
 import fs from "fs";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import helpers from "../utils/helpers.js";
@@ -14,52 +15,44 @@ import { transporter } from '../utils/nodemailer.js';
  ------------------------------------------*/
 export const addUser = async (req, res) => {
     try {
-        const { name, email, password, role, phone, address } = req.body;
+        const { name, email, password, role, phone, address, bio, skills, experienceYears, serviceArea, portfolioTitles, portfolioDescriptions } = req.body;
+        const skillsArray = Array.isArray(skills)
+            ? skills
+            : skills?.split(',').map(s => s.trim());
 
-        // validate equired fields 
+        // Validate required user fields
         if (!name || !email || !password || !role || !phone || !address) {
-            return res.status(400).json({ message: "Please Fill all required fields" });
+            return res.status(400).json({ message: "Please fill all required fields" });
         }
 
-        // validate email format
         if (!helpers.validateEmail(email)) {
             return res.status(400).json({ message: "Invalid email format" });
         }
 
-        // validate phone format
         if (!helpers.validatePhone(phone)) {
             return res.status(400).json({ message: "Invalid phone number format" });
         }
 
-        // validate password strength
         if (!helpers.validatePassword(password)) {
-            return res.status(400).json({ message: "Password must be at least 8 characters long, contain at least one uppercase letter, one number, and one special character" });
+            return res.status(400).json({ message: "Weak password format" });
         }
 
-        // Check if the user already exists
         const existingUser = await User.findOne({ email: email.toLowerCase() });
         if (existingUser) {
             return res.status(400).json({ message: "User already exists" });
         }
 
-        // Handle profile picture upload
         let profilePictureUrl = null;
-        if (req.file) {
-            try {
-                profilePictureUrl = await uploadToCloudinary(req.file.path);
-                // Delete the local file after uploading
-                fs.unlinkSync(req.file.path);
-            } catch (error) {
-                console.error('Error uploading profile picture:', error);
-                return res.status(500).json({ message: "Failed to upload profile picture" });
-            }
+        if (req.files?.profilePic?.[0]) {
+            profilePictureUrl = await uploadToCloudinary(req.files.profilePic[0].path);
+            fs.unlinkSync(req.files.profilePic[0].path);
         }
 
         const isActive = role === 'homeowner';
-        // convert email to lowercase
         const lowerCaseEmail = email.toLowerCase();
 
-        const newUser = new User({
+        // Create user object
+        const user = new User({
             name,
             email: lowerCaseEmail,
             password,
@@ -70,9 +63,45 @@ export const addUser = async (req, res) => {
             isActive
         });
 
-        await newUser.save();
-        // Return the user without password
-        const { password: _, ...userWithoutPassword } = newUser.toObject();
+        // If professional, create the profile
+        if (role === 'professional') {
+            if (!bio || !skillsArray || !experienceYears || !serviceArea) {
+                return res.status(400).json({ message: "Missing professional profile fields" });
+            }
+
+            const titles = Array.isArray(portfolioTitles) ? portfolioTitles : [portfolioTitles];
+            const descriptions = Array.isArray(portfolioDescriptions) ? portfolioDescriptions : [portfolioDescriptions];
+            const files = req.files?.portfolioImages || [];
+
+            const portfolio = [];
+
+            for (let i = 0; i < files.length; i++) {
+                const imageUrl = await uploadToCloudinary(files[i].path);
+                fs.unlinkSync(files[i].path);
+
+                portfolio.push({
+                    title: titles[i] || "",
+                    description: descriptions[i] || "",
+                    imageUrl
+                });
+            }
+
+            const newProfile = new ProfessionalProfile({
+                bio,
+                skills: skillsArray,
+                experienceYears,
+                serviceArea,
+                portfolio
+            });
+
+            const createdProfile = await newProfile.save();
+            user.professionalProfileId = createdProfile._id;
+        }
+
+        await user.save();
+
+        const { password: _, ...userWithoutPassword } = user.toObject();
+
         return res.status(201).json({
             message: "User added successfully",
             user: userWithoutPassword
@@ -80,7 +109,7 @@ export const addUser = async (req, res) => {
 
     } catch (error) {
         console.error('Error adding user:', error);
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ message: "Server error: " + error.message });
     }
 };
 

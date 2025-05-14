@@ -18,17 +18,8 @@ const professionalProfileSchema = new mongoose.Schema({
             "Roofing",
             "Landscaping",
             "Gardening",
-            "Pest Control",
             "Appliance Repair",
-            "Home Cleaning",
-            "Security System Installation",
-            "Window & Door Installation",
-            "Flooring Installation",
-            "Masonry",
-            "Drywall Repair",
-            "Waterproofing",
-            "Garage Door Repair",
-            "Pool Maintenance"
+            "Home Cleaning"
         ]
     }],
     experienceYears: {
@@ -40,9 +31,6 @@ const professionalProfileSchema = new mongoose.Schema({
         description: { type: String },
         imageUrl: { type: String }
     }],
-    hourlyRate: {
-        type: Number,
-    },
     serviceArea: [{
         type: String,
         required: true,

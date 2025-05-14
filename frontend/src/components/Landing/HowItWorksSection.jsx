@@ -5,8 +5,8 @@ import familyImage from '../../images/family.png';
 function HowItWorksSection() {
     return (
         <>
-            <div className="padding-large" id="how-it-works" style={{ marginTop: "-100px" }}>
-                <h3 style={{ marginBottom: "20px", marginLeft:"90px"
+            <div className="padding-meduim" id="how-it-works" style={{ marginBottom: "70px" }}>
+                <h3 style={{ marginBottom: "20px", marginLeft:"60px"
                  }}>How It works</h3>
                 <div className="d-flex gap-5 justify-content-center flex-wrap">
                     <div className="how-it-works-card">

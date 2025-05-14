@@ -1,10 +1,21 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import SignUpPage from './pages/SignUpPage';
 import LandingPage from './pages/LandingPage';
+
 
 function App() {
   return (
-    <LandingPage />
+
+    <BrowserRouter>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        
+      </Routes>
+    </BrowserRouter>
   );
 }
 

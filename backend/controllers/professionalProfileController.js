@@ -11,7 +11,7 @@ import { uploadToCloudinary } from "../utils/cloudinary.js";
  ------------------------------------------*/
 export const addProfile = async (req, res) => {
     try {
-        const { bio, skills, experienceYears, hourlyRate, serviceArea } = req.body;
+        const { bio, skills, experienceYears, serviceArea } = req.body;
         const userId = req.user.id;
 
         if (!bio || !skills || !experienceYears || !serviceArea) {
@@ -48,7 +48,6 @@ export const addProfile = async (req, res) => {
             bio,
             skills,
             experienceYears,
-            hourlyRate,
             serviceArea,
             portfolio
         });

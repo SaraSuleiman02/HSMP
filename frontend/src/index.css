@@ -606,7 +606,7 @@ img.zoom-in {
   background-color: var(--white-color);
   color: var(--blue-color);
   padding: 15px 20px;
-  width: 270px;
+  width: 320px;
   border-right: 1px solid var(--gray-color-400);
 }
 
@@ -688,7 +688,35 @@ img.zoom-in {
   background-color: var(--white-color);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
+
 .testimonial-card blockquote p {
   line-height: 1.5;
   color: var(--black-color);
+}
+
+/* 4.2 Login & Sign Up Pages
+--------------------------------------------------------------*/
+.form-control {
+  border: 1px solid lightgray;
+  /* Bootstrap 'secondary' color */
+  border-radius: 0.375rem;
+  padding: 5px;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #8cabf3;
+  box-shadow: 0 0 0 0.2rem rgba(140, 171, 243, 0.25);
+}
+
+.auth-form-container {
+  margin-top: -50px;
+  min-height: fit-content;
+  padding: 20px;
+}
+
+.auth-form {
+  background-color: var(--white-color);
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(240, 240, 240, 0.585);
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navbar, Nav, Container, Button, Row, Col } from 'react-bootstrap';
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 const MasterLayout = ({ children }) => {
     const [scrolled, setScrolled] = useState(false);
@@ -29,8 +30,12 @@ const MasterLayout = ({ children }) => {
                             {/* The search goes here */}
                         </Nav>
                         <div className="d-flex gap-2">
-                            <Button className="button btn-orange">Login</Button>
-                            <Button className="button btn-primary">Sign Up</Button>
+                            <NavLink to='/login'>
+                                <Button className="button btn-orange">Login</Button>
+                            </NavLink>
+                            <NavLink to='/signup'>
+                                <Button className="button btn-primary">Sign Up</Button>
+                            </NavLink>
                         </div>
                     </Navbar.Collapse>
                 </Container>
