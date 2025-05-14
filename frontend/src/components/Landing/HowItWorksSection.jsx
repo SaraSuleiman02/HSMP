@@ -47,7 +47,7 @@ function HowItWorksSection() {
                 <div className="jordan-section d-flex flex-column flex-grow-1 px-3">
                     <h3>Jordan’s first home services platform</h3>
                     <p>where trust and reliability bring homeowners and professionals together.</p>
-                    <a href="#login" className="button cta-button align-self-start mt-2">Get Started</a>
+                    <a href="/login" className="button cta-button align-self-start mt-2">Get Started</a>
                 </div>
 
                 <div className="jordan-image-container">
