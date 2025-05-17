@@ -66,8 +66,8 @@ export const createReview = async (req, res) => {
 
         // Update the professional's profile
         const professionalProfile = await ProfessionalProfile.findById(professional.professionalProfileId);
-        if (!professionalProfile){
-            return res.status(404).json ({ message: "Profile not found!"});
+        if (!professionalProfile) {
+            return res.status(404).json({ message: "Profile not found!" });
         }
 
         professionalProfile.averageRating = averageRating;
@@ -104,7 +104,7 @@ export const getAllReviews = async (req, res) => {
             .populate('professionalId', 'name')
             .populate('projectId', 'title');
 
-        return res.status(200).json( reviews );
+        return res.status(200).json(reviews);
     } catch (error) {
         console.error('Error fetching reviews:', error);
         return res.status(500).json({ message: 'Server error' });
@@ -113,16 +113,14 @@ export const getAllReviews = async (req, res) => {
 
 /**-----------------------------------------
  *  @desc   Get all Review for the Professional
- *  @route  GET /api/review/professional
- *  @access Private
- *  @role   Professional
+ *  @route  GET /api/review/professional/:id
  ------------------------------------------*/
 export const getProfessionalReviews = async (req, res) => {
     try {
-        const professionalId = req.user.id;
+        const { id } = req.params;
 
-        const reviews = await Review.find({ professionalId })
-            .populate('reviewerId', 'name') // who wrote the review
+        const reviews = await Review.find({ professionalId: id })
+            .populate('reviewerId', 'name profilePictureUrl') // who wrote the review
             .populate('projectId', 'title'); // which project it belongs to
 
         return res.status(200).json(reviews);

@@ -122,15 +122,15 @@ export const getProjectById = async (req, res) => {
 
 /**-----------------------------------------
  *  @desc    Get all homeowner Projects
- *  @route   GET /api/project/homeowner
+ *  @route   GET /api/project/homeowner/:id
  *  @access  Private
  *  @role    Homeowner
  ------------------------------------------*/
 export const getHomeownerProjects = async (req, res) => {
     try {
-        const homeownerId = req.user.id;
+        const { id } = req.params;
 
-        const projects = await Project.find({ homeownerId })
+        const projects = await Project.find({ homeownerId: id })
             .populate('homeownerId', 'name')
             .populate('assignedProfessionalId', 'name');
 
@@ -143,15 +143,13 @@ export const getHomeownerProjects = async (req, res) => {
 
 /**-----------------------------------------
  *  @desc    Get all professional Projects
- *  @route   GET /api/project/professional
- *  @access  Private
- *  @role    professional
+ *  @route   GET /api/project/professional/:id
  ------------------------------------------*/
 export const getProfessionalProjects = async (req, res) => {
     try {
-        const professionalId = req.user.id;
+        const { id } = req.params;
 
-        const projects = await Project.find({ assignedProfessionalId: professionalId })
+        const projects = await Project.find({ assignedProfessionalId: id })
             .populate('homeownerId', 'name')
             .populate('assignedProfessionalId', 'name');
 
@@ -168,7 +166,7 @@ export const getProfessionalProjects = async (req, res) => {
  *  @access  Private
  *  @role    Admin
  ------------------------------------------*/
- export const getProfessionalsWithAssignmentCount = async (req, res) => {
+export const getProfessionalsWithAssignmentCount = async (req, res) => {
     try {
         const professionals = await User.aggregate([
             {

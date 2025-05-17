@@ -11,10 +11,11 @@ export const AuthProvider = ({ children }) => {
     role: null,
     name: null,
     email: null,
-    photo: null,
+    profilePictureUrl: null,
     phone: null,
     address: null,
     isActive: null,
+    professionalProfileId: null
   });
   const [loading, setLoading] = useState(true);
 
@@ -38,10 +39,11 @@ export const AuthProvider = ({ children }) => {
         role: role,
         name: response.data.name || '',
         email: response.data.email || '',
-        photo: response.data.photo || '',
+        profilePictureUrl: response.data.profilePictureUrl || '',
         phone: response.data.phone || '',
         address: response.data.address || '',
         isActive: response.data.isActive || false,
+        professionalProfileId: response.data.professionalProfileId || '',
       });
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -94,10 +96,11 @@ export const AuthProvider = ({ children }) => {
       role: null,
       name: null,
       email: null,
-      photo: null,
+      profilePictureUrl: null,
       phone: null,
       address: null,
       isActive: null,
+      professionalProfileId: null,
     });
   };
 
