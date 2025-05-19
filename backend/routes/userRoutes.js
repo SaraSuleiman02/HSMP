@@ -26,7 +26,7 @@ router.post(
     addUser
 ); // Add a User
 router.post('/signin', signin); // Sign in a User
-router.get('/', verifyToken, authorizePosition('admin'), getAllUsers); //Get all Users
+router.get('/', verifyToken, getAllUsers); //Get all Users
 router.get('/:id', verifyToken, getUser); // Get a User by ID
 router.post('/sendOTP', sendOTP); // Send OTP for re-setting password
 router.post('/confirmOTP', confirmOTP); // Confirm OTP

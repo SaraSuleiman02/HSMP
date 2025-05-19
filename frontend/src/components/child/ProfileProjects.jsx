@@ -4,10 +4,13 @@ import axiosInstance from "../../axiosConfig";
 import { Card, Button } from "react-bootstrap";
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
+import ProfessionalPostDetials from './ProfessionalPostDetials.jsx';
 
 const ProfileProjects = ({ proId }) => {
     const [posts, setPosts] = useState([]);
     const [visibleCount, setVisibleCount] = useState(3);
+    const [showModal, setShowModal] = useState(false);
+    const [selectedPost, setSelecetdPost] = useState(null);
 
     useEffect(() => {
         fetchPosts();
@@ -27,9 +30,9 @@ const ProfileProjects = ({ proId }) => {
             case "Open":
                 return "bg-secondary";
             case "Assigned":
-                return "bg-warning text-dark";
+                return "bg-warning";
             case "In Progress":
-                return "bg-info text-dark";
+                return "bg-info";
             case "Completed":
                 return "bg-success";
             default:
@@ -40,6 +43,16 @@ const ProfileProjects = ({ proId }) => {
     const handleShowMore = () => {
         setVisibleCount(prev => prev + 3);
     };
+
+    const handleShowModal = (post) => {
+        setSelecetdPost(post);
+        setShowModal(true);
+    }
+
+    const handleCloseModal = () => {
+        setShowModal(false)
+        fetchPosts();
+    }
 
     return (
         <div>
@@ -85,9 +98,13 @@ const ProfileProjects = ({ proId }) => {
                             </div>
 
                             {/* Third Column: Status Badge */}
-                            <div className="ms-3 d-flex align-items-start">
+                            <div className="ms-3 d-flex flex-column align-items-start justify-content-between">
                                 <span className={`badge ${getBadgeColor(post.status)} fs-6`}>
                                     {post.status}
+                                </span>
+
+                                <span className='button cta-button' onClick={() => handleShowModal(post)}>
+                                    Details
                                 </span>
                             </div>
                         </div>
@@ -101,6 +118,15 @@ const ProfileProjects = ({ proId }) => {
                         Show More
                     </Button>
                 </div>
+            )}
+
+            {/* Post Details Modal */}
+            {selectedPost && (
+                <ProfessionalPostDetials
+                    show={showModal}
+                    handleClose={handleCloseModal}
+                    project={selectedPost}
+                />
             )}
         </div>
     );

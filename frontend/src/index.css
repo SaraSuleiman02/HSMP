@@ -200,6 +200,14 @@ a:hover {
   background: var(--light-baby-blue) !important;
 }
 
+.bg-orange {
+  background: var(--orange-color) !important;
+}
+
+.bg-blue {
+  background: var(--blue-color) !important;
+}
+
 .bg-white {
   background-color: var(--white-color) !important;
 }
@@ -532,6 +540,206 @@ img.zoom-in {
   opacity: 1;
 }
 
+/*--------------------------------------------------------------
+# Navbar
+--------------------------------------------------------------*/
+/* Navbar styling */
+.navbar {
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem;
+}
+
+.brand-logo {
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: #0d6efd;
+}
+
+/* Search container and input */
+.search-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.search-container {
+  width: 100%;
+  max-width: 400px;
+}
+
+.search-form {
+  width: 100%;
+}
+
+.search-input {
+  border-radius: 20px 0 0 20px;
+  border: 1px solid #dee2e6;
+}
+
+.search-button {
+  border-radius: 0 20px 20px 0;
+  border: 1px solid #dee2e6;
+  border-left: none;
+}
+
+/* Search results dropdown */
+.search-results-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  max-height: 350px;
+  overflow-y: auto;
+  background-color: white;
+  border-radius: 0.25rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  margin-top: 0.25rem;
+}
+
+.search-result-item {
+  padding: 0.75rem 1rem;
+  border-left: none;
+  border-right: none;
+}
+
+.search-result-avatar img {
+  object-fit: cover;
+}
+
+.search-result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-result-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.search-result-details {
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-result-skills {
+  color: #6c757d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  display: inline-block;
+}
+
+/* Navigation links and icons */
+.nav-link-text {
+  color: #6c757d;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  transition: color 0.2s ease;
+}
+
+.nav-link-text:hover {
+  color: #0d6efd;
+}
+
+.nav-icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
+  color: #6c757d;
+  transition: color 0.2s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.nav-icon-link:hover {
+  color: #0d6efd;
+}
+
+.nav-icon-btn {
+  color: #6c757d;
+}
+
+.nav-icon-btn:hover {
+  color: #0d6efd;
+}
+
+/* Dropdown styling */
+.nav-dropdown {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 0.6rem;
+  transform: translate(25%, -25%);
+}
+
+.dropdown-menu-end {
+  min-width: 280px;
+  padding: 0.5rem 0;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-header {
+  font-weight: 600;
+  background-color: #f8f9fa;
+  padding: 0.5rem 1rem;
+}
+
+.notification-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-avatar img {
+  object-fit: cover;
+}
+
+/* User dropdown */
+.user-dropdown {
+  cursor: pointer;
+}
+
+/* Main content padding to account for fixed navbar */
+.main-content {
+  padding-top: 70px;
+  min-height: 100vh;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991px) {
+  .search-container {
+    max-width: 100%;
+  }
+
+  .nav-icon-link {
+    padding: 0.5rem 1rem;
+    justify-content: flex-start;
+  }
+
+  .notification-badge {
+    position: static;
+    margin-left: 0.5rem;
+    transform: none;
+  }
+
+  .search-result-skills {
+    max-width: 150px;
+  }
+}
+
+
 /*----------------------------------------------*/
 /* 4. Pages */
 /*----------------------------------------------*/
@@ -561,6 +769,7 @@ img.zoom-in {
   -o-transition: all 0.3s ease;
   -ms-transition: all 0.3s ease;
   transition: all 0.3s ease;
+  margin-top: -70px;
 }
 
 .hero-section::before {
@@ -802,8 +1011,7 @@ img.zoom-in {
 /* 4.4 Feed Page 
 -----------------------------------------------------------------*/
 .feed-big-container {
-  background: #f8f9fa;
-  padding-top: 100px;
+  padding-top: 25px;
   margin-bottom: -22px;
   padding-bottom: 40px;
 }
@@ -936,7 +1144,7 @@ img.zoom-in {
   height: 120px;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .preview-image {
@@ -972,7 +1180,7 @@ img.zoom-in {
   min-height: 100vh;
   margin-bottom: -25px;
   background: #f8f9fa;
-  padding-top: 100px;
+  padding-top: 40px;
 }
 
 .post-detailsinner-container {
@@ -1051,6 +1259,7 @@ img.zoom-in {
 
 .detail-item {
   margin-bottom: 5px;
+  font-size: 15px;
 }
 
 /* Post images styling */

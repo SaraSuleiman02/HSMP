@@ -1,6 +1,7 @@
 import express from 'express';
 import {
     createBid,
+    getBidById,
     getAllBidsGroupedByProject,
     getBidsByProjectId,
     updateBidById,
@@ -12,6 +13,7 @@ import authorizePosition from '../middlewares/authorizePosition.js';
 const router = express.Router();
 
 router.post('/:projectId', verifyToken, authorizePosition('professional'), createBid); // Create new Bid
+router.get('/:bidId', verifyToken, getBidById); // Get a bid By ID
 router.get('/', verifyToken, getAllBidsGroupedByProject);
 router.get('/project/:projectId', verifyToken, getBidsByProjectId); // Get all Bids by Project ID
 router.put('/:bidId', verifyToken, authorizePosition('professional'), updateBidById); // Update a Bid by ID

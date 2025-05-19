@@ -86,7 +86,8 @@ export const getAllProjects = async (req, res) => {
     try {
         const projects = await Project.find()
             .populate('homeownerId', 'name profilePictureUrl')
-            .populate('assignedProfessionalId', 'name');
+            .populate('assignedProfessionalId', 'name')
+            .populate('bidId');
 
         res.status(200).json(projects);
     } catch (error) {
@@ -227,6 +228,7 @@ export const hireProfessional = async (req, res) => {
             return res.status(404).json({ message: "Professional not found!" });
         }
 
+        project.bidId = bidId;
         project.assignedProfessionalId = bid.professionalId;
         project.status = 'Assigned';
         await project.save();
@@ -332,9 +334,43 @@ export const startProject = async (req, res) => {
         }
 
         project.status = "In Progress";
+        project.startTime = new Date();
         await project.save();
 
         return res.status(200).json({ message: "Project Started successfully!" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+/**-----------------------------------------
+ *  @desc   Upload Photo after
+ *  @route  PUT /api/project/photo-after/:id
+ *  @access Private
+ *  @role   professional
+ ------------------------------------------*/
+export const uploadPhotoAfter = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const project = await Project.findById(id);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found!" });
+        }
+
+        let photoAfterUrl = null;
+        if (req.file) {
+            try {
+                photoAfterUrl = await uploadToCloudinary(req.file.path);
+                fs.unlinkSync(req.file.path);  // Clean up the file after uploading
+            } catch (error) {
+                return res.status(500).json({ message: "Failed to upload photo after" });
+            }
+        }
+        project.photoAfter = photoAfterUrl;
+        await project.save();
+
+        return res.status(200).json({ message: "Photo Added successfully!" , project});
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
@@ -355,14 +391,29 @@ export const endProject = async (req, res) => {
             return res.status(404).json({ message: "Project not found!" });
         }
 
+        // Check if project has started
+        if (!project.startTime) {
+            return res.status(400).json({ message: "Project has not started yet!" });
+        }
+
         project.status = "Completed";
+        project.endTime = new Date();
+
+        // Calculate the timer in minutes
+        const durationMs = project.endTime - project.startTime;
+        const durationMinutes = Math.floor(durationMs / (1000 * 60)); // convert to minutes
+        project.duration = durationMinutes;
+
         await project.save();
 
-        return res.status(200).json({ message: "Project Ended successfully!" });
+        return res.status(200).json({
+            message: "Project ended successfully!",
+            duration: durationMinutes
+        });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
-}
+};
 
 /**-----------------------------------------
  *  @desc    Delete a project by ID

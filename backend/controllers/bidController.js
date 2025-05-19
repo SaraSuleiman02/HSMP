@@ -67,6 +67,31 @@ export const createBid = async (req, res) => {
 };
 
 /**-----------------------------------------
+ *  @desc   Get a bid by ID
+ *  @route  GET /api/bid/:bidId
+ *  @access Public
+ *  @role   Admin, homeowner, professional
+ ------------------------------------------*/
+export const getBidById = async (req, res) => {
+    try {
+        const { bidId } = req.params;
+
+        const bid = await Bid.findById(bidId)
+            .populate('professionalId', 'name profilePictureUrl')
+            .populate('projectId', 'title description status');
+
+        if (!bid) {
+            return res.status(404).json({ message: "Bid not found" });
+        }
+
+        return res.status(200).json(bid);
+    } catch (error) {
+        console.error("Error fetching bid by ID:", error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+/**-----------------------------------------
  *  @desc   Get all bids grouped by project
  *  @route  GET /api/bids
  *  @access Public

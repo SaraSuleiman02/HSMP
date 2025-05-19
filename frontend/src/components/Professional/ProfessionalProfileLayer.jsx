@@ -53,7 +53,7 @@ const ProfessionalProfileLayer = () => {
 
     return (
         <div className='padding-small'>
-            <Container className="my-5">
+            <Container className="my-1">
                 {/* Top Profile Card */}
                 <Card className="mb-4">
                     <Card.Img

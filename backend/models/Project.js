@@ -63,6 +63,10 @@ const projectSchema = mongoose.Schema({
         enum: ['Open', 'Assigned', 'In Progress', 'Completed'],
         default: 'Open'
     },
+    bidId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Bid',
+    },
     assignedProfessionalId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -70,6 +74,19 @@ const projectSchema = mongoose.Schema({
     images: [{
         type: String,
     }],
+    startTime: {
+        type: Date,
+    },
+    endTime: {
+        type: Date,
+    },
+    duration: {
+        type: Number, // in minutes
+        default: 0,
+    },
+    photoAfter: {
+        type: String,
+    }
 }, { timestamps: true });
 
 const Project = mongoose.model('Project', projectSchema);
