@@ -47,14 +47,16 @@ const HomeOwnerProfileLayer = () => {
           <Card.Body className="text-center">
             <div className="position-relative" style={{ marginTop: '-75px' }}>
               <Image
-                src={userData.profilePictureUrl || 'https://via.placeholder.com/150'}
+                src={userData.profilePictureUrl}
                 roundedCircle
                 className="border border-white border-5"
                 style={{ width: '150px', height: '150px', objectFit: 'cover', backgroundColor: '#f8f9fa' }}
               />
             </div>
-            <Card.Title className="mt-3 mb-3">{userData.name || "User"}</Card.Title>
-            <Card.Text className="text-muted">{userData.role || ""}</Card.Text>
+            <div className='d-flex justify-content-center gap-2'>
+              <Card.Title className="mt-3 mb-3">{userData.name || "User"}</Card.Title>
+              <Card.Text className="text-muted mt-3">({userData.role || ""})</Card.Text>
+            </div>
             <div>
               {user.role === 'professional' && (
                 <span>
@@ -75,9 +77,11 @@ const HomeOwnerProfileLayer = () => {
               onSelect={(k) => setKey(k)}
               className=" d-flex justify-content-center"
             >
-              <Tab eventKey="profile" title="Profile">
-                {/* Profile Tab Content */}
-              </Tab>
+              {isOwnProfile && (
+                <Tab eventKey="profile" title="Profile">
+                  {/* Profile Tab Content */}
+                </Tab>
+              )}
               <Tab eventKey="posts" title="Posts">
                 {/* Posts Tab Content */}
               </Tab>

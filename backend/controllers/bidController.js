@@ -26,10 +26,16 @@ export const createBid = async (req, res) => {
             return res.status(404).json({ message: "Project not found" });
         }
 
-        // check if the user exists
+        // check if the user exists and is a professional
         const user = await User.findById(id);
         if (!user || user.role !== 'professional') {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: "User not found or not a professional" });
+        }
+
+        // check for existing bid from the same professional for this project
+        const existingBid = await Bid.findOne({ projectId, professionalId: id });
+        if (existingBid) {
+            return res.status(400).json({ message: "You have already placed a bid for this project" });
         }
 
         const newBid = new Bid({
@@ -45,19 +51,20 @@ export const createBid = async (req, res) => {
         const socketId = getConnectedUsers().get(project.homeownerId.toString());
         if (socketId) {
             req.io.to(socketId).emit('bid', {
-                message: `You've recieved a bid for project: ${project.title}`,
+                message: `You've received a bid for project: ${project.title}`,
                 projectId: project._id
             });
         }
 
         return res.status(201).json({
-            message: "Bid Added successfuly!",
+            message: "Bid added successfully!",
             newBid
         });
+
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
-}
+};
 
 /**-----------------------------------------
  *  @desc   Get all bids grouped by project
@@ -118,9 +125,9 @@ export const getBidsByProjectId = async (req, res) => {
         }
 
         const bids = await Bid.find({ projectId })
-        
-        .populate('professionalId', 'name')
-        .sort({ createdAt: -1 }); // Most recent first
+
+            .populate('professionalId', 'name profilePictureUrl')
+            .sort({ createdAt: -1 }); // Most recent first
 
         return res.status(200).json(bids);
     } catch (error) {
@@ -145,6 +152,10 @@ export const updateBidById = async (req, res) => {
         const bid = await Bid.findById(bidId);
         if (!bid) {
             return res.status(404).json({ message: "Bid not found" });
+        }
+
+        if (bid.status === "Accepted") {
+            return res.status(409).json({ message: "Bid already accepted, can't edit!" });
         }
 
         if (bid.professionalId.toString() !== userId) {

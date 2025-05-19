@@ -42,7 +42,7 @@ const LoginLayer = () => {
 
             if (response) {
                 toast.success('Login successful!');
-                // navigate('/feed'); // Uncomment to navigate after successful login & notification
+                navigate('/feed');
             } else {
                 setError("Login failed. Please check your credentials or try again.");
                 toast.error("Login failed. Please check your credentials or try again.");

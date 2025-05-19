@@ -7,6 +7,8 @@ import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/LandingPage';
 import HomeOwnerProfilePage from './pages/HomeOwnerProfilePage';
 import ProfessionalProfilePage from './pages/ProfessionalProfilePage';
+import FeedPage from './pages/FeedPage';
+import PostDetails from './components/PostDetails';
 
 function App() {
   return (
@@ -19,11 +21,17 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
 
         {/* Protected Routes with role check*/}
-        {/* <Route path="/feed" element={
+        <Route path="/feed" element={
           <ProtectedRoute allowedRoles={['homeowner', 'professional']}>
             <FeedPage />
           </ProtectedRoute>
-        } /> */}
+        } />
+
+        <Route path="/post-details" element={
+          <ProtectedRoute allowedRoles={['homeowner', 'professional']}>
+            <PostDetails />
+          </ProtectedRoute>
+        } />
 
         <Route path="/profile" element={
           <ProtectedRoute allowedRoles={['homeowner', 'professional']}>

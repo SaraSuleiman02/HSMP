@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router-dom';
 import { Form, Button, Container, Row, Col, Card } from 'react-bootstrap';
 import axiosInstance from '../../axiosConfig';
 
@@ -39,6 +40,7 @@ const SignUpLayer = () => {
         serviceArea: [],
         portfolio: [{ title: '', description: '', imageUrl: null }],
     });
+    const navigate = useNavigate();
 
     const handleRoleChange = (event) => {
         setUserRole(event.target.value);
@@ -138,6 +140,7 @@ const SignUpLayer = () => {
             try {
                 await axiosInstance.post('/user', completeFormData);
                 toast.success('Home Owner account created successfully!');
+                navigate('/login');
             } catch (error) {
                 toast.error(error.response?.data?.message || 'Signup failed. Please try again.');
             }

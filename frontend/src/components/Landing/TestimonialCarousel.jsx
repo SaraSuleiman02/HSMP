@@ -23,7 +23,7 @@ const testimonials = [
 const TestimonialCarousel = () => {
     return (
         <div className="padding-medium">
-            <h3 className="text-center mb-4 text-black">What Our Clients Say</h3>
+            <h3 className="text-center mb-4 text-black">What Our Users Say</h3>
             <div className="position-relative">
                 <Carousel
                     interval={6000}

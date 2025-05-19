@@ -798,3 +798,418 @@ img.zoom-in {
   font-size: 15px;
   color: #888;
 }
+
+/* 4.4 Feed Page 
+-----------------------------------------------------------------*/
+.feed-big-container {
+  background: #f8f9fa;
+  padding-top: 100px;
+  margin-bottom: -22px;
+  padding-bottom: 40px;
+}
+
+.feed-container {
+  width: 100%;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 0 10px;
+}
+
+.filter-sidebar {
+  width: 250px;
+  padding: 15px;
+  background-color: var(--white-color);
+  border: 1px solid var(--light-gray-color);
+  border-radius: 8px;
+  margin-right: 30px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  position: sticky;
+  top: 90px;
+  /* Increased to account for navbar height */
+  height: fit-content;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+  max-height: calc(100vh - 100px);
+  /* Adjusted to account for navbar height */
+  overflow-y: auto;
+}
+
+.posts-container {
+  flex: 1;
+  max-width: 900px;
+}
+
+.post-card {
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+}
+
+.user-avatar {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border: 2px solid white;
+  cursor: pointer;
+}
+
+.user-name {
+  cursor: pointer;
+}
+
+.carousel-image {
+  max-height: 300px;
+  object-fit: contain;
+  width: 100%;
+}
+
+.action-link {
+  cursor: pointer;
+}
+
+.action-link:hover {
+  color: #0d6efd !important;
+}
+
+.filter-badge {
+  cursor: pointer;
+  padding: 6px 10px;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+.filter-badge:hover {
+  opacity: 0.8;
+}
+
+.no-posts-message {
+  text-align: center;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+/* Mobile styles */
+@media (max-width: 767px) {
+  .filter-sidebar {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+
+  .filter-sidebar.hide {
+    display: none;
+  }
+
+  .filter-toggle-container {
+    margin-bottom: 15px;
+  }
+}
+
+.cta-button {
+  background-color: #0d6efd;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.cta-button:hover {
+  background-color: #0b5ed7;
+}
+
+/* Image upload styles */
+.image-upload-container {
+  border: 2px dashed #dee2e6;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.upload-btn {
+  padding: 10px 20px;
+}
+
+.preview-image-container {
+  position: relative;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 2px 6px;
+  opacity: 0.8;
+}
+
+.remove-image-btn:hover {
+  opacity: 1;
+}
+
+.calendar-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  pointer-events: none;
+}
+
+
+/*------------- Post Details Page:  card styling-------------------- */
+.post-details-container {
+  min-height: 100vh;
+  margin-bottom: -25px;
+  background: #f8f9fa;
+  padding-top: 100px;
+}
+
+.post-detailsinner-container {
+  margin-top: 40px !important;
+}
+
+.post-details-card {
+  padding: 0 20px 0 20px;
+  width: 100%;
+  max-width: 1000px;
+  /* allows it to shrink on smaller screens */
+  margin: 0 auto;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+}
+
+.facebook-style-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  margin-bottom: 20px;
+}
+
+/* Post header styling */
+.post-header {
+  padding-bottom: 10px;
+}
+
+.post-avatar {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border: 2px solid #f0f2f5;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.post-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.post-username {
+  font-weight: 600;
+  cursor: pointer;
+  color: #050505;
+}
+
+.post-username:hover {
+  text-decoration: underline;
+}
+
+/* Post content styling */
+
+.post-content {
+  margin-bottom: 12px;
+}
+
+.post-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #050505;
+}
+
+.post-description {
+  color: #1c1e21;
+  margin-bottom: 12px;
+  white-space: pre-line;
+}
+
+.post-details {
+  background-color: #f0f2f5;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.detail-item {
+  margin-bottom: 5px;
+}
+
+/* Post images styling */
+.post-images {
+  margin: 10px 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.carousel-image {
+  max-height: 400px;
+  object-fit: contain;
+  width: 100%;
+}
+
+/* Post stats styling */
+.post-stats {
+  padding: 10px 0;
+  border-top: 1px solid #e4e6eb;
+  border-bottom: 1px solid #e4e6eb;
+}
+
+.bid-button {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+/* Comments section styling */
+.comments-section {
+  margin-top: 15px;
+}
+
+.comments-header {
+  font-weight: 600;
+  color: #65676b;
+}
+
+.comment-divider {
+  margin: 10px 0;
+  border-color: #e4e6eb;
+}
+
+.comment-item {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.comment-avatar {
+  margin-right: 10px;
+}
+
+.comment-user-avatar {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.comment-content {
+  flex: 1;
+  position: relative;
+}
+
+.comment-bubble {
+  background-color: #f0f2f5;
+  border-radius: 18px;
+  padding: 12px 15px;
+  position: relative;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.comment-username {
+  font-weight: 600;
+  color: #050505;
+}
+
+.comment-text {
+  color: #1c1e21;
+  margin-bottom: 5px;
+}
+
+.bid-details {
+  display: flex;
+  gap: 15px;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #65676b;
+}
+
+.bid-detail {
+  display: flex;
+  align-items: center;
+}
+
+.bid-icon {
+  margin-right: 5px;
+  font-size: 12px;
+}
+
+.hire-button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 5px;
+}
+
+.hire-button {
+  font-size: 12px;
+  padding: 2px 10px;
+}
+
+.hired-badge {
+  position: absolute;
+  right: 10px;
+  bottom: -20px;
+}
+
+.show-more-butt.bid-form-container {
+  margin-top: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #e4e6eb;
+}
+
+.bid-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.bid-action-btn {
+  padding: 0;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.edit-btn {
+  color: #0d6efd;
+  text-decoration: none;
+}
+
+.delete-btn {
+  color: #dc3545;
+  text-decoration: none;
+}
+
+.edit-btn:hover {
+  text-decoration: underline;
+}
+
+.delete-btn:hover {
+  color: #dc3545;
+  text-decoration: underline;
+}

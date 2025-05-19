@@ -85,7 +85,7 @@ export const createProject = async (req, res) => {
 export const getAllProjects = async (req, res) => {
     try {
         const projects = await Project.find()
-            .populate('homeownerId', 'name')
+            .populate('homeownerId', 'name profilePictureUrl')
             .populate('assignedProfessionalId', 'name');
 
         res.status(200).json(projects);
@@ -97,16 +97,16 @@ export const getAllProjects = async (req, res) => {
 
 /**-----------------------------------------
  *  @desc    Get a Project by ID
- *  @route   GET /api/project/:id
+ *  @route   GET /api/project/:projectId
  *  @access  Public
- *  @role    Admin, Homeowner
+ *  @role    Admin, Homeowner, Professional
  ------------------------------------------*/
 export const getProjectById = async (req, res) => {
     try {
-        const projectId = req.params.id;
+        const { projectId } = req.params;
 
         const project = await Project.findById(projectId)
-            .populate('homeownerId', 'name')
+            .populate('homeownerId', 'name profilePictureUrl')
             .populate('assignedProfessionalId', 'name');
 
         if (!project) {
@@ -230,6 +230,9 @@ export const hireProfessional = async (req, res) => {
         project.assignedProfessionalId = bid.professionalId;
         project.status = 'Assigned';
         await project.save();
+
+        bid.status = "Accepted";
+        bid.save();
 
         const socketId = getConnectedUsers().get(bid.professionalId.toString());
         if (socketId) {

@@ -74,16 +74,16 @@ const ProfessionalProfileLayer = () => {
                             <Card.Title className="mt-3 mb-3">{userData.name || "User"}</Card.Title>
                             <Card.Text className="text-muted mt-3">({userData.role || ""})</Card.Text>
                         </div>
-                        <Card.Text className='align-self-center' style={{maxWidth: "500px"}}>{proProfileData.bio}</Card.Text>
+                        <Card.Text className='align-self-center' style={{ maxWidth: "500px" }}>{proProfileData.bio}</Card.Text>
 
                         <hr />
 
                         <div className='mt-3 d-flex justify-content-around flex-wrap'>
-                            <div className='d-felx felx-column' style={{ maxWidth: "200px"}}>
+                            <div className='d-felx felx-column' style={{ maxWidth: "200px" }}>
                                 <h5>Skills</h5>
                                 <p>{proProfileData.skills?.join(', ')}</p>
                             </div>
-                            <div className='d-felx felx-column' style={{ maxWidth: "200px"}}>
+                            <div className='d-felx felx-column' style={{ maxWidth: "200px" }}>
                                 <h5>Servie Area</h5>
                                 <p>{proProfileData.serviceArea?.join(', ')}</p>
                             </div>
@@ -121,9 +121,11 @@ const ProfessionalProfileLayer = () => {
                             onSelect={(k) => setKey(k)}
                             className=" d-flex justify-content-center"
                         >
-                            <Tab eventKey="profile" title="Profile">
-                                {/* Profile Tab Content */}
-                            </Tab>
+                            {isOwnProfile && (
+                                <Tab eventKey="profile" title="Profile">
+                                    {/* Profile Tab Content */}
+                                </Tab>
+                            )}
                             <Tab eventKey="projects" title="Projects">
                                 {/* Posts Tab Content */}
                             </Tab>

@@ -9,7 +9,7 @@ const MasterLayout = ({ children }) => {
 
     const navigate = useNavigate();
     const location = useLocation();
-    const isProfilePage = location.pathname === '/profile' || location.pathname === '/professional-profile';
+    const isProfilePage = location.pathname === '/profile' || location.pathname === '/professional-profile' || location.pathname === '/feed' || location.pathname === '/post-details';
 
     // This effect will add a scroll event listener to the window to change the navbar style based on scroll position
     useEffect(() => {
