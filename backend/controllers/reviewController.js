@@ -112,6 +112,25 @@ export const getAllReviews = async (req, res) => {
 };
 
 /**-----------------------------------------
+ *  @desc   Get Review by Project ID
+ *  @route  GET /api/review/project/:projectId
+ *  @access Private
+ ------------------------------------------*/
+export const getReviewByProjectId = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+
+        const review = await Review.findOne({ projectId });
+
+        return res.status(200).json(review);
+    } catch (error) {
+        console.error('Error fetching review by projectId:', error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
+/**-----------------------------------------
  *  @desc   Get all Review for the Professional
  *  @route  GET /api/review/professional/:id
  ------------------------------------------*/

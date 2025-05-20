@@ -549,12 +549,6 @@ img.zoom-in {
   padding: 0.5rem 1rem;
 }
 
-.brand-logo {
-  font-weight: 700;
-  font-size: 1.5rem;
-  color: #0d6efd;
-}
-
 /* Search container and input */
 .search-wrapper {
   display: flex;
@@ -668,7 +662,7 @@ img.zoom-in {
   color: #0d6efd;
 }
 
-/* Dropdown styling */
+/* Dropdown styling
 .nav-dropdown {
   position: relative;
 }
@@ -706,10 +700,10 @@ img.zoom-in {
   object-fit: cover;
 }
 
-/* User dropdown */
+/* User dropdown 
 .user-dropdown {
   cursor: pointer;
-}
+} */
 
 /* Main content padding to account for fixed navbar */
 .main-content {

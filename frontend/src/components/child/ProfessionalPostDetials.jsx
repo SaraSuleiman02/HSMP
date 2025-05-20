@@ -4,7 +4,7 @@ import axiosInstance from '../../axiosConfig';
 import { toast, ToastContainer } from 'react-toastify';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../context/AuthContext';
-import { FaCalendarAlt, FaMapMarkerAlt, FaMoneyBillWave, FaTools, FaUser, FaClock, FaUpload, FaCheck, FaPlay, FaStop, FaTrash } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaMoneyBillWave, FaTools, FaUser, FaClock, FaUpload, FaCheck, FaPlay, FaStop, FaTrash, FaStar } from 'react-icons/fa';
 import 'react-toastify/dist/ReactToastify.css';
 
 const ProfessionalPostDetials = ({ show, handleClose, project: initialProject, onProjectDeleted }) => {
@@ -16,18 +16,29 @@ const ProfessionalPostDetials = ({ show, handleClose, project: initialProject, o
     const [loading, setLoading] = useState(false);
     const [uploadLoading, setUploadLoading] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [review, setReview] = useState(null);
+
+    // Review state
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState('');
+    const [reviewLoading, setReviewLoading] = useState(false);
+    const [hoveredRating, setHoveredRating] = useState(0);
 
     const isOwnProfile = project?.assignedProfessionalId?._id === user?.id;
     const isHomeownerOwnPost = user?.role === "homeowner" && project?.homeownerId?._id === user?.id;
     const canStartProject = isOwnProfile && project?.status === "Assigned" && !project?.startTime;
     const canEndProject = isOwnProfile && project?.status === "In Progress" && !project?.endTime;
     const canUploadAfterImage = isOwnProfile && (project?.status === "In Progress" || project?.status === "Completed") && !project?.photoAfter;
+    const canAddReview = isHomeownerOwnPost && project?.status === "Completed" && !review;
 
     // Reset state when modal closes
     useEffect(() => {
         if (!show) {
             setPhotoAfter(null);
             setPhotoPreview(null);
+            setRating(0);
+            setComment('');
+            setHoveredRating(0);
         }
     }, [show]);
 
@@ -35,6 +46,7 @@ const ProfessionalPostDetials = ({ show, handleClose, project: initialProject, o
     useEffect(() => {
         if (show && project?._id) {
             fetchProject();
+            fetchReview();
         }
     }, [show, project?._id]);
 
@@ -54,6 +66,16 @@ const ProfessionalPostDetials = ({ show, handleClose, project: initialProject, o
             toast.error("Error fetching project details");
         }
     };
+
+    const fetchReview = async () => {
+        try {
+            const response = await axiosInstance.get(`/review/project/${project._id}`);
+            setReview(response.data);
+        } catch (error) {
+            console.error("Error fetching review:", error);
+            // Don't show error toast as review might not exist yet
+        }
+    }
 
     const fetchBid = async () => {
         try {
@@ -179,6 +201,41 @@ const ProfessionalPostDetials = ({ show, handleClose, project: initialProject, o
                 setPhotoPreview(reader.result);
             };
             reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSubmitReview = async (e) => {
+        e.preventDefault();
+
+        if (rating === 0) {
+            toast.warning("Please select a rating");
+            return;
+        }
+
+        if (!comment.trim()) {
+            toast.warning("Please enter a comment");
+            return;
+        }
+
+        setReviewLoading(true);
+
+        try {
+            const response = await axiosInstance.post(`/review/${project._id}`, {
+                rating,
+                comment
+            });
+
+            toast.success("Review submitted successfully");
+            await fetchReview(); // Refresh review data
+
+            // Reset form
+            setRating(0);
+            setComment('');
+        } catch (error) {
+            console.error("Error submitting review:", error);
+            toast.error(error.response?.data?.message || "Failed to submit review");
+        } finally {
+            setReviewLoading(false);
         }
     };
 
@@ -356,14 +413,14 @@ const ProfessionalPostDetials = ({ show, handleClose, project: initialProject, o
                                         <Col md={project?.photoAfter ? 6 : 12}>
                                             <div className="d-flex align-items-center mb-2 fs-6">
                                                 <FaPlay className="me-2 text-success" />
-                                                <span><strong>Started:</strong> {formatDate(project.startTime)}</span>
+                                                <span><strong>Start Time:</strong> {formatDate(project.startTime)}</span>
                                             </div>
 
                                             {project?.endTime && (
                                                 <>
                                                     <div className="d-flex align-items-center mb-2 fs-6">
                                                         <FaStop className="me-2 text-danger" />
-                                                        <span><strong>Completed:</strong> {formatDate(project.endTime)}</span>
+                                                        <span><strong>End Time:</strong> {formatDate(project.endTime)}</span>
                                                     </div>
 
                                                     <div className="d-flex align-items-center mb-2 fs-6">
@@ -377,16 +434,108 @@ const ProfessionalPostDetials = ({ show, handleClose, project: initialProject, o
 
                                     {project?.photoAfter && (
                                         <Col md={project?.startTime ? 6 : 12}>
-                                            <h6 className="mb-2">After Completion</h6>
-                                            <img
-                                                src={project.photoAfter}
-                                                alt="After completion"
-                                                className="img-fluid rounded"
-                                                style={{ maxHeight: "200px", objectFit: "cover" }}
-                                            />
+                                            <div className="text-center">
+                                                <p className="mb-2"><strong>After Completion Photo</strong></p>
+                                                <img
+                                                    src={project.photoAfter}
+                                                    alt="After completion"
+                                                    className="img-fluid rounded"
+                                                    style={{ maxHeight: "200px" }}
+                                                />
+                                            </div>
                                         </Col>
                                     )}
                                 </Row>
+                            </Card.Body>
+                        </Card>
+                    )}
+
+                    {/* Review Section (only for homeowners viewing their own completed projects) */}
+                    {isHomeownerOwnPost && project?.status === "Completed" && (
+                        <Card className="mb-3">
+                            <Card.Header className="bg-primary text-white">
+                                <h5 className="mb-0 text-white">
+                                    {review ? "Your Review" : "Add Your Review"}
+                                </h5>
+                            </Card.Header>
+                            <Card.Body>
+                                {review ? (
+                                    <Row>
+                                        <Col md={12}>
+                                            <div className="mb-3">
+                                                <div className="d-flex align-items-center mb-2">
+                                                    <strong className="me-2">Your Rating:</strong>
+                                                    <div>
+                                                        {[1, 2, 3, 4, 5].map((star) => (
+                                                            <FaStar
+                                                                key={star}
+                                                                className="me-1"
+                                                                style={{ color: star <= review.rating ? '#ffc107' : '#e4e5e9' }}
+                                                                size={20}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="mb-2">
+                                                    <strong>Your Comment:</strong>
+                                                    <p className="mt-1">{review.comment}</p>
+                                                </div>
+                                                <div className="text-muted small">
+                                                    Submitted on {formatDate(review.createdAt)}
+                                                </div>
+                                            </div>
+                                        </Col>
+                                    </Row>
+                                ) : (
+                                    <Form onSubmit={handleSubmitReview}>
+                                        <Form.Group className="mb-3">
+                                            <Form.Label><strong>Rating</strong></Form.Label>
+                                            <div className="d-flex align-items-center">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <FaStar
+                                                        key={star}
+                                                        className="me-2"
+                                                        style={{
+                                                            cursor: 'pointer',
+                                                            color: (hoveredRating || rating) >= star ? '#ffc107' : '#e4e5e9'
+                                                        }}
+                                                        size={30}
+                                                        onClick={() => setRating(star)}
+                                                        onMouseEnter={() => setHoveredRating(star)}
+                                                        onMouseLeave={() => setHoveredRating(0)}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </Form.Group>
+
+                                        <Form.Group className="mb-3">
+                                            <Form.Label><strong>Comment</strong></Form.Label>
+                                            <Form.Control
+                                                as="textarea"
+                                                rows={3}
+                                                placeholder="Share your experience with this professional..."
+                                                value={comment}
+                                                onChange={(e) => setComment(e.target.value)}
+                                                required
+                                            />
+                                        </Form.Group>
+
+                                        <Button
+                                            variant="primary"
+                                            type="submit"
+                                            disabled={reviewLoading || rating === 0 || !comment.trim()}
+                                        >
+                                            {reviewLoading ? (
+                                                <>
+                                                    <Spinner as="span" animation="border" size="sm" className="me-2" />
+                                                    Submitting...
+                                                </>
+                                            ) : (
+                                                'Submit Review'
+                                            )}
+                                        </Button>
+                                    </Form>
+                                )}
                             </Card.Body>
                         </Card>
                     )}

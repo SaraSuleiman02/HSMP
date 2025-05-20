@@ -45,8 +45,8 @@ const OverallReport = () => {
       type: 'donut',
       height: 270,
     },
-    labels: ['Home Owners', 'Professionals'],
-    colors: ['#9333EA', '#22C55E'],
+    labels: [ 'Professionals','Home Owners'],
+    colors: ['#22C55E','#9333EA'],
     legend: {
       show: false
     },

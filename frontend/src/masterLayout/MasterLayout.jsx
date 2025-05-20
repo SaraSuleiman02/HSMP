@@ -2,8 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Navbar, Nav, Container, Button, Row, Col, Form, Dropdown, InputGroup, Badge, ListGroup } from 'react-bootstrap';
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { FaSearch, FaComments, FaBell, FaUser, FaSignOutAlt, FaUserCircle, FaEnvelope, FaTools } from 'react-icons/fa';
+import { FaSearch, FaTools } from 'react-icons/fa';
+import { Icon } from "@iconify/react/dist/iconify.js";
 import axiosInstance from '../axiosConfig';
+import './MasterLayout.css';
 
 const MasterLayout = ({ children }) => {
     const { user, loading, logout } = useAuth();
@@ -18,10 +20,12 @@ const MasterLayout = ({ children }) => {
     // Mock data for notifications and chats - replace with actual data from your API
     const [notifications, setNotifications] = useState([]);
     const [chats, setChats] = useState([]);
+    const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
     const isProfilePage = location.pathname === '/profile' || location.pathname === '/professional-profile' || location.pathname === '/feed' || location.pathname === '/post-details';
+    const profileDropdownRef = useRef(null);
 
     // This effect will add a scroll event listener to the window to change the navbar style based on scroll position
     useEffect(() => {
@@ -44,6 +48,13 @@ const MasterLayout = ({ children }) => {
                 !searchInputRef.current.contains(event.target)
             ) {
                 setShowSearchResults(false);
+            }
+
+            if (
+                profileDropdownRef.current &&
+                !profileDropdownRef.current.contains(event.target)
+            ) {
+                setShowProfileDropdown(false);
             }
         };
 
@@ -96,6 +107,7 @@ const MasterLayout = ({ children }) => {
     const handleLogout = async () => {
         await logout();       // Wait until logout finishes
         navigate('/');        // Then navigate to home
+        setShowProfileDropdown(false);
     };
 
     const handleSearch = (e) => {
@@ -153,6 +165,7 @@ const MasterLayout = ({ children }) => {
         } else if (user.role === 'professional') {
             navigate('/professional-profile');
         }
+        setShowProfileDropdown(false);
     };
 
     // Function to get user skills as a string
@@ -164,6 +177,10 @@ const MasterLayout = ({ children }) => {
             return user.professionalProfileId.skills.join(', ');
         }
         return '';
+    };
+
+    const toggleProfileDropdown = () => {
+        setShowProfileDropdown(!showProfileDropdown);
     };
 
     return (
@@ -281,119 +298,72 @@ const MasterLayout = ({ children }) => {
                                         Feed
                                     </Nav.Link>
 
-                                    {/* Chat Dropdown */}
-                                    <Dropdown align="end" className="nav-dropdown">
-                                        <Dropdown.Toggle as="div" className="nav-icon-link">
-                                            <FaComments />
+                                    {/* Chat Icon */}
+                                    <div className="nav-icon-container">
+                                        <div className="nav-icon-link">
+                                            <Icon icon="lucide:message-circle" className="icon text-xl" />
                                             {chats.length > 0 && (
                                                 <Badge pill bg="danger" className="notification-badge">
                                                     {chats.length}
                                                 </Badge>
                                             )}
-                                        </Dropdown.Toggle>
+                                        </div>
+                                    </div>
 
-                                        <Dropdown.Menu className="dropdown-menu-end">
-                                            <Dropdown.Header>Messages</Dropdown.Header>
-                                            {chats.length > 0 ? (
-                                                <>
-                                                    {chats.map((chat, index) => (
-                                                        <Dropdown.Item key={index} as={Link} to={`/chat/${chat.id}`}>
-                                                            <div className="d-flex align-items-center">
-                                                                <div className="chat-avatar me-2">
-                                                                    <img
-                                                                        src={chat.profilePicture || "https://via.placeholder.com/40"}
-                                                                        alt={chat.name}
-                                                                        className="rounded-circle"
-                                                                        width="40"
-                                                                        height="40"
-                                                                    />
-                                                                </div>
-                                                                <div>
-                                                                    <div className="fw-bold">{chat.name}</div>
-                                                                    <div className="text-muted small text-truncate" style={{ maxWidth: "200px" }}>
-                                                                        {chat.lastMessage}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </Dropdown.Item>
-                                                    ))}
-                                                    <Dropdown.Divider />
-                                                    <Dropdown.Item as={Link} to="/chat" className="text-center">
-                                                        See all messages
-                                                    </Dropdown.Item>
-                                                </>
-                                            ) : (
-                                                <div className="px-3 py-2 text-center">
-                                                    <p className="mb-0">No messages</p>
-                                                    <Dropdown.Item as={Link} to="/chat" className="btn btn-sm btn-outline-primary mt-2">
-                                                        Go to Chat
-                                                    </Dropdown.Item>
-                                                </div>
-                                            )}
-                                        </Dropdown.Menu>
-                                    </Dropdown>
-
-                                    {/* Notifications Dropdown */}
-                                    <Dropdown align="end" className="nav-dropdown">
-                                        <Dropdown.Toggle as="div" className="nav-icon-link">
-                                            <FaBell />
+                                    {/* Notification Icon */}
+                                    <div className="nav-icon-container">
+                                        <div className="nav-icon-link">
+                                            <Icon icon="lucide:bell" className="icon text-xl" />
                                             {notifications.length > 0 && (
                                                 <Badge pill bg="danger" className="notification-badge">
                                                     {notifications.length}
                                                 </Badge>
                                             )}
-                                        </Dropdown.Toggle>
-
-                                        <Dropdown.Menu className="dropdown-menu-end">
-                                            <Dropdown.Header>Notifications</Dropdown.Header>
-                                            {notifications.length > 0 ? (
-                                                <>
-                                                    {notifications.map((notification, index) => (
-                                                        <Dropdown.Item key={index} as={Link} to={notification.link || "#"}>
-                                                            <div className="d-flex">
-                                                                <div className="me-3">
-                                                                    <div className="notification-icon bg-primary text-white">
-                                                                        <FaBell />
-                                                                    </div>
-                                                                </div>
-                                                                <div>
-                                                                    <div>{notification.message}</div>
-                                                                    <div className="text-muted small">
-                                                                        {notification.time}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </Dropdown.Item>
-                                                    ))}
-                                                    <Dropdown.Divider />
-                                                    <Dropdown.Item as={Link} to="/notifications" className="text-center">
-                                                        See all notifications
-                                                    </Dropdown.Item>
-                                                </>
-                                            ) : (
-                                                <div className="px-3 py-2 text-center">
-                                                    <p className="mb-0">No notifications</p>
-                                                </div>
-                                            )}
-                                        </Dropdown.Menu>
-                                    </Dropdown>
+                                        </div>
+                                    </div>
 
                                     {/* Profile Dropdown */}
-                                    <Dropdown align="end" className="nav-dropdown">
-                                        <Dropdown.Toggle as="div" className="nav-icon-link user-dropdown">
-                                            <FaUser />
-                                        </Dropdown.Toggle>
+                                    <div className="nav-icon-container position-relative">
+                                        <div
+                                            className="nav-icon-link profile-icon"
+                                            onClick={toggleProfileDropdown}
+                                        >
+                                            <img
+                                                src={user.profilePictureUrl}
+                                                alt={user.name}
+                                                className="rounded-circle"
+                                                width="40"
+                                                height="40"
+                                            />
+                                        </div>
 
-                                        <Dropdown.Menu>
-                                            <Dropdown.Item onClick={handleProfileClick}>
-                                                <FaUserCircle className="me-2" /> Profile
-                                            </Dropdown.Item>
-                                            <Dropdown.Divider />
-                                            <Dropdown.Item onClick={handleLogout}>
-                                                <FaSignOutAlt className="me-2" /> Logout
-                                            </Dropdown.Item>
-                                        </Dropdown.Menu>
-                                    </Dropdown>
+                                        {showProfileDropdown && (
+                                            <div className="profile-dropdown-menu" ref={profileDropdownRef}>
+                                                <div className="profile-dropdown-header">
+                                                    <div className="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <div className="fw-bold">{user.name}</div>
+                                                            <div className="text-muted">{user.role}</div>
+                                                        </div>
+                                                        <button
+                                                            className="btn-close"
+                                                            onClick={() => setShowProfileDropdown(false)}
+                                                        ></button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="profile-dropdown-item profile icon" onClick={handleProfileClick}>
+                                                    <Icon icon="lucide:user" className=" text-sm me-2" />
+                                                    My Profile
+                                                </div>
+
+                                                <div className="profile-dropdown-item logout icon" onClick={handleLogout}>
+                                                    <Icon icon="lucide:power" className="text-sm me-2" />
+                                                    Log Out
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </>
                             )}
                         </Nav>
@@ -401,18 +371,9 @@ const MasterLayout = ({ children }) => {
                 </Container>
             </Navbar>
 
-            {/* Main content with padding to account for fixed navbar */}
-            <main className="main-content">{children}</main>
-
-            <footer className="footer text-light py-1 mt-4" style={{ background: 'linear-gradient(to bottom, #c0d1f9, #dce6fd)' }}>
-                <Container>
-                    <Row>
-                        <Col className="text-center mt-3">
-                            <p><strong>&copy; 2025 HSMP.JO | All rights reserved.</strong></p>
-                        </Col>
-                    </Row>
-                </Container>
-            </footer>
+            <main className="main-content">
+                {children}
+            </main>
         </>
     );
 };
