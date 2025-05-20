@@ -920,7 +920,7 @@ img.zoom-in {
 
 .auth-form-container {
   margin-top: -50px;
-  min-height: fit-content;
+  min-height: 107vh;
   padding: 20px;
 }
 

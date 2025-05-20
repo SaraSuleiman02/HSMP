@@ -78,7 +78,6 @@ const FeedLayer = () => {
     const fetchPosts = async () => {
         try {
             const response = await axiosInstance.get('/project');
-            console.log("Data: ", response.data);
 
             // Sort posts from newest to oldest
             const sortedPosts = response.data.sort((a, b) =>

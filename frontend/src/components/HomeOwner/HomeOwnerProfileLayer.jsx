@@ -61,7 +61,6 @@ const HomeOwnerProfileLayer = () => {
               {user.role === 'professional' && (
                 <span>
                   <Button variant="primary" className="me-2">Chat</Button>
-                  <Button variant="outline-secondary">More Info</Button>
                 </span>
               )}
             </div>
