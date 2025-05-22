@@ -24,7 +24,7 @@ const MasterLayout = ({ children }) => {
 
     const navigate = useNavigate();
     const location = useLocation();
-    const isProfilePage = location.pathname === '/profile' || location.pathname === '/professional-profile' || location.pathname === '/feed' || location.pathname === '/post-details';
+    const isProfilePage = location.pathname === '/profile' || location.pathname === '/professional-profile' || location.pathname === '/feed' || location.pathname === '/post-details' || location.pathname === '/chat';
     const profileDropdownRef = useRef(null);
 
     // This effect will add a scroll event listener to the window to change the navbar style based on scroll position
@@ -187,7 +187,7 @@ const MasterLayout = ({ children }) => {
         <>
             <Navbar
                 expand="lg"
-                className={`py-2 fixed-top ${(scrolled || isProfilePage) ? 'bg-light shadow-sm' : 'bg-transparent'}`}
+                className={`py-2 fixed-top ${(scrolled || isProfilePage) ? 'bg-white shadow-sm' : 'bg-transparent'}`}
             >
                 <Container>
                     {/* Brand on the left */}

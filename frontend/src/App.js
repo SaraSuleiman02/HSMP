@@ -9,6 +9,7 @@ import HomeOwnerProfilePage from './pages/HomeOwnerProfilePage';
 import ProfessionalProfilePage from './pages/ProfessionalProfilePage';
 import FeedPage from './pages/FeedPage';
 import PostDetails from './components/PostDetails';
+import ChatPage from './pages/ChatPage';
 
 function App() {
   return (
@@ -30,6 +31,12 @@ function App() {
         <Route path="/post-details" element={
           <ProtectedRoute allowedRoles={['homeowner', 'professional']}>
             <PostDetails />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/chat" element={
+          <ProtectedRoute allowedRoles={['homeowner', 'professional']}>
+            <ChatPage />
           </ProtectedRoute>
         } />
 

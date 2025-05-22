@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   getOrCreateChatRoom,
+  getUserChatRooms,
   getMessages,
   markMessagesAsRead
 } from '../controllers/chatController.js';
@@ -11,6 +12,9 @@ const router = express.Router();
 
 // Create or get existing chat room between two users
 router.post('/:receiverId', verifyToken, authorizePosition('homeowner', 'professional'), getOrCreateChatRoom);
+
+// Get all Chats for a User
+router.get('/rooms', verifyToken, getUserChatRooms);
 
 // Get all messages in a chat room
 router.get('/:chatRoomId', verifyToken, authorizePosition('homeowner', 'professional'), getMessages);

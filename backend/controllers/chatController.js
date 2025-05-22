@@ -29,6 +29,34 @@ export const getOrCreateChatRoom = async (req, res) => {
 };
 
 /**-----------------------------------------
+ *  @desc   Get all chat rooms for a user
+ *  @route  GET /api/chat/rooms
+ *  @access Private
+ *  @role   homeowner, professional
+ ------------------------------------------*/
+export const getUserChatRooms = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Find all chat rooms where the user is a participant
+        const chatRooms = await ChatRoom.find({
+            participants: userId
+        })
+            .populate('lastMessage')
+            .populate({
+                path: 'participants',
+                match: { _id: { $ne: userId } }, // Exclude the current user
+                select: 'name email profilePictureUrl role' // Select only necessary fields
+            })
+            .sort({ updatedAt: -1 }); // Sort by most recent activity
+
+        return res.status(200).json( chatRooms );
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+/**-----------------------------------------
  *  @desc   Get all messages in a chat room
  *  @route  GET /api/chat/:chatRoomId
  *  @access Private
