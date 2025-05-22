@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, Container, Image, Button, Tabs, Tab, Modal, Form, Spinner } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
 import { toast, ToastContainer } from 'react-toastify';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ProfileChild from '../child/ProfileChild';
 import ProfilePosts from '../child/ProfilePosts';
 import profileBg from '../../images/profile-bg.png';
@@ -13,6 +13,7 @@ import 'react-toastify/dist/ReactToastify.css';
 const HomeOwnerProfileLayer = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const viewedUserId = location.state?.viewedUserId || user.id;
   const isOwnProfile = viewedUserId === user.id;
   // State for active tab key
@@ -42,6 +43,28 @@ const HomeOwnerProfileLayer = () => {
       toast.error("Error Fetching user data");
     }
   }
+
+  // Handle Chat button click
+  const handleChatClick = async () => {
+    try {
+      // Create or get existing chat room directly with API call
+      const response = await axiosInstance.post(`/chat/${viewedUserId}`);
+      const chatRoom = response.data.chatRoom;
+
+      if (chatRoom) {
+        // Navigate to chat page with chatRoomId in state
+        navigate('/chat', {
+          state: {
+            initialChatRoomId: chatRoom._id,
+            otherUserId: viewedUserId
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error starting chat:", error);
+      toast.error("Failed to start chat. Please try again.");
+    }
+  };
 
   const handleImageClick = () => {
     if (isOwnProfile) {
@@ -158,7 +181,13 @@ const HomeOwnerProfileLayer = () => {
             <div>
               {user.role === 'professional' && (
                 <span>
-                  <Button variant="primary" className="me-2">Chat</Button>
+                  <Button
+                    variant="primary"
+                    className="me-2"
+                    onClick={handleChatClick}
+                  >
+                    Chat
+                  </Button>
                 </span>
               )}
             </div>
