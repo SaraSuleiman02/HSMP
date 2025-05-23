@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { io } from 'socket.io-client';
 import axiosInstance from '../axiosConfig';
 import { useAuth } from './AuthContext';
+import { useSocketContext } from './SocketContext';
 import { toast } from 'react-toastify';
 
 const ChatContext = createContext();
@@ -10,85 +10,53 @@ export const useChatContext = () => useContext(ChatContext);
 
 export const ChatProvider = ({ children }) => {
     const { user } = useAuth();
-    const [socket, setSocket] = useState(null);
+    const { socket, isConnected, isUserOnline } = useSocketContext(); // Use global socket and online status check
+
+    // Removed: const [socket, setSocket] = useState(null);
     const [chatRooms, setChatRooms] = useState([]);
     const [activeChat, setActiveChat] = useState(null);
     const [messages, setMessages] = useState([]);
-    const [onlineUsers, setOnlineUsers] = useState(new Set());
+    // Removed: const [onlineUsers, setOnlineUsers] = useState(new Set()); // Handled globally now
     const [typingUsers, setTypingUsers] = useState({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [unreadCounts, setUnreadCounts] = useState({});
 
-    // Use refs to track active chat and messages for socket handlers
     const activeChatRef = useRef(null);
     const messagesRef = useRef([]);
-    const isTypingRef = useRef(false); // Track current typing state
+    const isTypingRef = useRef(false);
 
-    // Keep refs in sync with state
     useEffect(() => {
         activeChatRef.current = activeChat;
         messagesRef.current = messages;
     }, [activeChat, messages]);
 
-    // Initialize socket connection
+    // Removed: useEffect for initializing socket connection (now handled globally)
+
+    // Effect to set up chat-specific socket listeners using the global socket instance
     useEffect(() => {
-        if (user?.id) {
-            // Connect to socket server
-            const newSocket = io('http://localhost:8000', {
-                withCredentials: false,
-                transports: ['websocket'],
-                reconnection: true,
-                reconnectionAttempts: 5,
-                reconnectionDelay: 1000,
-            });
+        if (socket && isConnected) {
+            console.log('ChatContext: Attaching chat-specific listeners to global socket.');
 
-            // Set up socket event listeners
-            newSocket.on('connect', () => {
-                console.log('Connected to socket server');
-                // Register user with socket server
-                newSocket.emit('register', user.id);
-            });
+            // Handle incoming messages for the chat
+            const handleReceiveMessage = ({ chatRoomId, message }) => {
+                console.log('ChatContext: Received message:', message, 'for chat room:', chatRoomId);
+                console.log('ChatContext: Active chat:', activeChatRef.current?._id);
 
-            newSocket.on('disconnect', () => {
-                console.log('Disconnected from socket server');
-            });
-
-            newSocket.on('error', (error) => {
-                console.error('Socket error:', error);
-            });
-
-            newSocket.on('connect_error', (error) => {
-                console.error('Socket connection error:', error);
-            });
-
-            // Handle incoming messages
-            newSocket.on('receiveMessage', ({ chatRoomId, message }) => {
-                console.log('Received message:', message, 'for chat room:', chatRoomId);
-                console.log('Active chat:', activeChatRef.current?._id);
-
-                // Always update messages if it's for the active chat, regardless of who sent it
                 if (activeChatRef.current?._id === chatRoomId) {
-                    console.log('Updating messages for active chat');
+                    console.log('ChatContext: Updating messages for active chat');
                     setMessages(prev => {
-                        // Check if message already exists to prevent duplicates
                         const exists = prev.some(m => m._id === message._id);
-                        if (exists) {
-                            console.log('Message already exists, not adding');
-                            return prev;
-                        }
-                        console.log('Adding new message to state');
+                        if (exists) return prev;
                         return [...prev, message];
                     });
 
-                    // Only mark as read if the chat is currently active/open and the message is for the current user
                     if (message.receiver._id === user.id) {
-                        console.log('Marking message as read');
-                        newSocket.emit('markAsRead', { chatRoomId, userId: user.id });
+                        console.log('ChatContext: Marking message as read');
+                        socket.emit('markAsRead', { chatRoomId, userId: user.id });
                     }
                 } else if (message.receiver._id === user.id) {
-                    // Increment unread count for this room only if the message is for the current user
-                    console.log('Incrementing unread count for chat room:', chatRoomId);
+                    console.log('ChatContext: Incrementing unread count for chat room:', chatRoomId);
                     setUnreadCounts(prev => ({
                         ...prev,
                         [chatRoomId]: (prev[chatRoomId] || 0) + 1
@@ -97,160 +65,147 @@ export const ChatProvider = ({ children }) => {
 
                 // Update chat rooms list to show latest message
                 setChatRooms(prev => {
-                    // Check if room exists in current list
                     const roomIndex = prev.findIndex(room => room._id === chatRoomId);
-
                     if (roomIndex !== -1) {
-                        // Create a new array to trigger re-render
                         const updatedRooms = [...prev];
                         updatedRooms[roomIndex] = {
                             ...updatedRooms[roomIndex],
                             lastMessage: message,
                             updatedAt: new Date().toISOString()
                         };
-
-                        // Sort rooms by most recent message
-                        return updatedRooms.sort((a, b) =>
-                            new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)
-                        );
+                        return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
                     } else {
-                        // If the room isn't in our list, fetch all rooms again
+                        // If the room isn't in the list, fetch all rooms again
+                        // Consider if this is the desired behavior or if the new room should be added
                         fetchChatRooms();
                         return prev;
                     }
                 });
-            });
+            };
 
             // Handle messages being read
-            newSocket.on('messagesRead', ({ chatRoomId, readBy }) => {
-                console.log('Messages read in room:', chatRoomId, 'by user:', readBy);
-
-                setMessages(prev =>
-                    prev.map(msg =>
-                        msg.sender._id === user.id && msg.receiver._id === readBy
-                            ? { ...msg, read: true }
-                            : msg
-                    )
-                );
-            });
+            const handleMessagesRead = ({ chatRoomId, readBy }) => {
+                console.log('ChatContext: Messages read in room:', chatRoomId, 'by user:', readBy);
+                // Update message state only if it's the active chat
+                if (activeChatRef.current?._id === chatRoomId) {
+                    setMessages(prev =>
+                        prev.map(msg =>
+                            msg.sender._id === user.id && msg.receiver._id === readBy
+                                ? { ...msg, read: true }
+                                : msg
+                        )
+                    );
+                }
+                // Potentially update chatRooms state as well if needed
+            };
 
             // Handle user typing status
-            newSocket.on('userTyping', ({ chatRoomId, userId, isTyping }) => {
-                console.log('User typing:', userId, 'in room:', chatRoomId, 'status:', isTyping);
-
-                // Update typing users state
+            const handleUserTyping = ({ chatRoomId, userId, isTyping }) => {
+                console.log('ChatContext: User typing:', userId, 'in room:', chatRoomId, 'status:', isTyping);
                 setTypingUsers(prev => {
-                    // Create a new object to ensure React detects the change
                     const newTypingUsers = { ...prev };
-
                     if (!newTypingUsers[chatRoomId]) {
                         newTypingUsers[chatRoomId] = [];
                     }
-
                     if (isTyping) {
-                        // Add user to typing list if not already there
                         if (!newTypingUsers[chatRoomId].includes(userId)) {
                             newTypingUsers[chatRoomId] = [...newTypingUsers[chatRoomId], userId];
                         }
                     } else {
-                        // Remove user from typing list
                         newTypingUsers[chatRoomId] = newTypingUsers[chatRoomId].filter(id => id !== userId);
                     }
-
                     return newTypingUsers;
                 });
-            });
+            };
 
-            // Handle user online status
-            newSocket.on('userStatus', ({ userId, isOnline }) => {
-                console.log('User status update:', userId, 'online:', isOnline);
+            // Removed: 'userStatus' listener (handled globally)
 
-                setOnlineUsers(prev => {
-                    const newSet = new Set(prev);
-                    if (isOnline) {
-                        newSet.add(userId);
-                    } else {
-                        newSet.delete(userId);
-                    }
-                    return newSet;
-                });
-            });
+            // Attach listeners
+            socket.on('receiveMessage', handleReceiveMessage);
+            socket.on('messagesRead', handleMessagesRead);
+            socket.on('userTyping', handleUserTyping);
 
-            setSocket(newSocket);
-
-            // Cleanup on unmount
+            // Cleanup: remove chat-specific listeners when component unmounts or socket changes
             return () => {
-                newSocket.disconnect();
+                console.log('ChatContext: Removing chat-specific listeners.');
+                socket.off('receiveMessage', handleReceiveMessage);
+                socket.off('messagesRead', handleMessagesRead);
+                socket.off('userTyping', handleUserTyping);
             };
         }
-    }, [user?.id]);
+    }, [socket, isConnected, user?.id]); // Depend on the global socket instance and user ID
 
-    // Fetch chat rooms when user changes
+    // Fetch chat rooms when user logs in
     useEffect(() => {
-        if (user?.id) {
+        if (user?.id && isConnected) { // Also ensure socket is connected
             fetchChatRooms();
         }
-    }, [user?.id]);
+        // Clear rooms if user logs out
+        if (!user?.id) {
+            setChatRooms([]);
+            setActiveChat(null);
+            setMessages([]);
+            setUnreadCounts({});
+            setTypingUsers({});
+        }
+    }, [user?.id, isConnected]); // Rerun when user ID or connection status changes
 
     // Fetch messages when active chat changes
     useEffect(() => {
-        if (activeChat?._id) {
+        if (activeChat?._id && isConnected) { // Ensure socket is connected
             fetchMessages(activeChat._id);
-
-            // Reset unread count for this room
-            setUnreadCounts(prev => ({
-                ...prev,
-                [activeChat._id]: 0
-            }));
-
-            // Mark messages as read when viewing a chat
+            setUnreadCounts(prev => ({ ...prev, [activeChat._id]: 0 }));
             if (socket) {
                 socket.emit('markAsRead', { chatRoomId: activeChat._id, userId: user.id });
             }
-
-            // Reset typing state when changing chats
             isTypingRef.current = false;
         }
-    }, [activeChat?._id, socket, user?.id]);
+        // Clear messages if active chat is unset
+        if (!activeChat?._id) {
+            setMessages([]);
+        }
+    }, [activeChat?._id, socket, isConnected, user?.id]);
 
     const fetchChatRooms = useCallback(async () => {
+        if (!user?.id) return; // Don't fetch if no user
         try {
             setLoading(true);
             const response = await axiosInstance.get('/chat/rooms');
-            console.log('Fetched chat rooms:', response.data);
-
-            // Sort rooms by most recent message
-            const sortedRooms = [...response.data].sort((a, b) =>
-                new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)
-            );
-
+            console.log('ChatContext: Fetched chat rooms:', response.data);
+            const sortedRooms = [...response.data].sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
             setChatRooms(sortedRooms);
-            setLoading(false);
+            setError(null);
         } catch (err) {
-            console.error('Error fetching chat rooms:', err);
+            console.error('ChatContext: Error fetching chat rooms:', err);
             setError('Failed to load chat rooms');
-            setLoading(false);
             toast.error('Failed to load conversations');
+        } finally {
+            setLoading(false);
         }
-    }, []);
+    }, [user?.id]);
 
     const fetchMessages = async (chatRoomId) => {
         try {
             setLoading(true);
             const response = await axiosInstance.get(`/chat/${chatRoomId}`);
-            console.log('Fetched messages for room:', chatRoomId, response.data.messages);
+            console.log('ChatContext: Fetched messages for room:', chatRoomId, response.data.messages);
             setMessages(response.data.messages);
-            setLoading(false);
+            setError(null);
         } catch (err) {
-            console.error('Error fetching messages:', err);
+            console.error('ChatContext: Error fetching messages:', err);
             setError('Failed to load messages');
-            setLoading(false);
             toast.error('Failed to load messages');
+        } finally {
+            setLoading(false);
         }
     };
 
     const sendMessage = (content, receiverId) => {
-        if (!socket || !activeChat) return;
+        if (!socket || !isConnected || !activeChat || !user?.id) {
+            console.error('ChatContext: Cannot send message. Socket not connected or missing info.');
+            toast.error('Connection error, cannot send message.');
+            return;
+        }
 
         const messageData = {
             senderId: user.id,
@@ -259,24 +214,20 @@ export const ChatProvider = ({ children }) => {
             chatRoomId: activeChat._id
         };
 
-        console.log('Sending message:', messageData);
+        console.log('ChatContext: Sending message:', messageData);
 
-        socket.emit('sendMessage', messageData, ({ success, message, error }) => {
+        socket.emit('sendMessage', messageData, ({ success, message, error: sendError }) => {
             if (success) {
-                console.log('Message sent successfully:', message);
-
-                // Add message to local state
+                console.log('ChatContext: Message sent successfully callback received:', message);
+                // Add message optimistically (or wait for receiveMessage event)
                 setMessages(prev => {
-                    // Check if message already exists to prevent duplicates
                     const exists = prev.some(m => m._id === message._id);
                     if (exists) return prev;
                     return [...prev, message];
                 });
-
-                // Update chat rooms list
+                // Update chat rooms list optimistically
                 setChatRooms(prev => {
                     const roomIndex = prev.findIndex(room => room._id === activeChat._id);
-
                     if (roomIndex !== -1) {
                         const updatedRooms = [...prev];
                         updatedRooms[roomIndex] = {
@@ -284,17 +235,12 @@ export const ChatProvider = ({ children }) => {
                             lastMessage: message,
                             updatedAt: new Date().toISOString()
                         };
-
-                        // Sort rooms by most recent message
-                        return updatedRooms.sort((a, b) =>
-                            new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)
-                        );
+                        return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
                     }
-
                     return prev;
                 });
             } else {
-                console.error('Error sending message:', error);
+                console.error('ChatContext: Error sending message via socket:', sendError);
                 setError('Failed to send message');
                 toast.error('Failed to send message');
             }
@@ -302,52 +248,48 @@ export const ChatProvider = ({ children }) => {
     };
 
     const createOrGetChatRoom = async (receiverId) => {
+        if (!user?.id) return null;
         try {
             setLoading(true);
             const response = await axiosInstance.post(`/chat/${receiverId}`);
             const newRoom = response.data.chatRoom;
-            console.log('Created/got chat room:', newRoom);
+            console.log('ChatContext: Created/got chat room:', newRoom);
 
-            // Check if room already exists in our list
             const existingRoomIndex = chatRooms.findIndex(room => room._id === newRoom._id);
-
             if (existingRoomIndex === -1) {
-                // Add new room to list
-                setChatRooms(prev => [newRoom, ...prev]);
+                setChatRooms(prev => [newRoom, ...prev].sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)));
+            } else {
+                // If room exists, maybe just move it to the top?
+                setChatRooms(prev => {
+                    const existing = prev[existingRoomIndex];
+                    const others = prev.filter(r => r._id !== newRoom._id);
+                    return [existing, ...others]; // Keep existing data, just reorder
+                });
             }
 
-            // Set as active chat
             setActiveChat(newRoom);
-
-            // Reset unread count for this room
-            setUnreadCounts(prev => ({
-                ...prev,
-                [newRoom._id]: 0
-            }));
-
-            setLoading(false);
+            setUnreadCounts(prev => ({ ...prev, [newRoom._id]: 0 }));
+            setError(null);
             return newRoom;
         } catch (err) {
-            console.error('Error creating chat room:', err);
-            setError('Failed to create chat room');
-            setLoading(false);
-            toast.error('Failed to create conversation');
+            console.error('ChatContext: Error creating/getting chat room:', err);
+            setError('Failed to create/get chat room');
+            toast.error('Failed to start conversation');
             return null;
+        } finally {
+            setLoading(false);
         }
     };
 
     const setTypingStatus = (isTyping) => {
-        if (!socket || !activeChat) return;
+        if (!socket || !isConnected || !activeChat || !user?.id) return;
 
-        // Only emit if the typing state has changed
         if (isTypingRef.current !== isTyping) {
             isTypingRef.current = isTyping;
-
             const otherParticipant = activeChat.participants.find(p => p._id !== user.id);
             if (!otherParticipant) return;
 
-            console.log('Setting typing status:', isTyping, 'for room:', activeChat._id);
-
+            console.log('ChatContext: Setting typing status:', isTyping, 'for room:', activeChat._id);
             socket.emit('typing', {
                 chatRoomId: activeChat._id,
                 userId: user.id,
@@ -357,12 +299,12 @@ export const ChatProvider = ({ children }) => {
     };
 
     const value = {
-        socket,
+        // Removed: socket - use from SocketContext directly if needed elsewhere
         chatRooms,
         activeChat,
         setActiveChat,
         messages,
-        onlineUsers,
+        // Removed: onlineUsers - use isUserOnline from SocketContext
         typingUsers,
         loading,
         error,
@@ -370,10 +312,9 @@ export const ChatProvider = ({ children }) => {
         sendMessage,
         createOrGetChatRoom,
         setTypingStatus,
-        fetchChatRooms,
-        isUserOnline: (userId) => onlineUsers.has(userId),
-        isUserTyping: (chatRoomId, userId) =>
-            typingUsers[chatRoomId]?.includes(userId) || false,
+        fetchChatRooms, // Keep if needed externally
+        isUserOnline, // Pass through the global function
+        isUserTyping: (chatRoomId, userId) => typingUsers[chatRoomId]?.includes(userId) || false,
         getUnreadCount: (roomId) => unreadCounts[roomId] || 0
     };
 

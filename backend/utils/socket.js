@@ -36,17 +36,16 @@ export const configureSocket = (io) => {
                     sender: senderId,
                     receiver: receiverId,
                     content,
-                    read: false, // Ensure messages start as unread
+                    read: false,
                 });
                 await message.save();
 
-                // Populate sender info with more fields
+                // Populate sender info
                 await message.populate({
                     path: 'sender',
-                    select: 'id name profilePictureUrl role' // Include profile picture
+                    select: 'id name profilePictureUrl role'
                 });
 
-                // Also populate receiver for completeness
                 await message.populate({
                     path: 'receiver',
                     select: 'id name profilePictureUrl role'
@@ -60,9 +59,23 @@ export const configureSocket = (io) => {
                 const receiverSocketId = connectedUsers.get(receiverId);
                 if (receiverSocketId) {
                     console.log(`Emitting message to receiver ${receiverId} with socket ID ${receiverSocketId}`);
+
+                    // Live chat message
                     io.to(receiverSocketId).emit('receiveMessage', {
                         chatRoomId: chatRoom._id,
                         message,
+                    });
+
+                    // Notification for general use ( in the navbar )
+                    io.to(receiverSocketId).emit('notification', {
+                        senderId,
+                        receiverId,
+                        type: 'new_message',
+                        data: {
+                            chatRoomId: chatRoom._id,
+                            message,
+                        },
+                        timestamp: new Date()
                     });
                 } else {
                     console.log(`Receiver ${receiverId} is not online, message will be delivered when they connect`);
@@ -214,7 +227,6 @@ const broadcastUserStatus = async (io, userId, isOnline) => {
                 // Emit to the other participant if online
                 const socketId = connectedUsers.get(participantId.toString());
                 if (socketId) {
-                    console.log(`Notifying user ${participantId} about ${userId}'s status: ${isOnline}`);
                     io.to(socketId).emit('userStatus', {
                         userId,
                         isOnline,

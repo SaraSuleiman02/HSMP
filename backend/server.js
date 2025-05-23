@@ -23,6 +23,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Create HTTP server and initialize Socket.IO
+const server = http.createServer(app);
+const io = new socketIo(server);
+
+// Attach Socket.IO instance to req before defining routes
+app.use((req, res, next) => {
+    req.io = io;
+    next();
+});
+
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URL)
     .then(() => console.log('Connected to MongoDB'))
@@ -33,20 +43,14 @@ app.get('/', (req, res) => {
     res.json({ message: 'Welcome to HSMP API' });
 });
 
-app.use('/api/user', userRoutes); // User Routes
-app.use('/api/admin', adminRoutes); // Admin Routes
-app.use('/api/profile', professionalProfileRoutes); // Professional Profile Routes
-app.use('/api/project', projectRoutes); // Project Routes
-app.use('/api/bid', bidRoutes); // Bid Routes
-app.use('/api/review', reviewRoutes); // Review Routes
-app.use('/api/chat', chatRoutes); // Chat Routes
-
-
-// Create HTTP server and pass the express app to it
-const server = http.createServer(app);
-
-// Initialize Socket.IO with the HTTP server (with 'new')
-const io = new socketIo(server);
+// Routes
+app.use('/api/user', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/profile', professionalProfileRoutes);
+app.use('/api/project', projectRoutes);
+app.use('/api/bid', bidRoutes);
+app.use('/api/review', reviewRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Socket.IO Connection Handler
 configureSocket(io);
@@ -56,11 +60,8 @@ app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Something went wrong!' });
 });
-app.use((req, res, next) => {
-    req.io = io;
-    next();
-});
 
+// Start the server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

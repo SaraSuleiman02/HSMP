@@ -49,10 +49,20 @@ export const createBid = async (req, res) => {
         await newBid.save();
 
         const socketId = getConnectedUsers().get(project.homeownerId.toString());
+
         if (socketId) {
-            req.io.to(socketId).emit('bid', {
-                message: `You've received a bid for project: ${project.title}`,
-                projectId: project._id
+            req.io.to(socketId).emit('notification', {
+                senderId: id,
+                receiverId: project.homeownerId.toString(),
+                type: 'new_bid', // custom notification type
+                data: {
+                    projectId: project._id,
+                    projectTitle: project.title,
+                    bidId: newBid._id,
+                    amount,
+                    estimatedDuration
+                },
+                timestamp: new Date()
             });
         }
 
@@ -62,6 +72,7 @@ export const createBid = async (req, res) => {
         });
 
     } catch (error) {
+        console.log("Error adding bid: ", error )
         return res.status(500).json({ message: error.message });
     }
 };

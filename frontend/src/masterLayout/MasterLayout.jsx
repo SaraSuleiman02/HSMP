@@ -1,145 +1,122 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Navbar, Nav, Container, Button, Row, Col, Form, Dropdown, InputGroup, Badge, ListGroup } from 'react-bootstrap';
+import { Navbar, Nav, Container, Button, Form, Dropdown, InputGroup, Badge, ListGroup } from 'react-bootstrap';
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useSocketContext } from '../context/SocketContext';
 import { FaSearch, FaTools } from 'react-icons/fa';
 import { Icon } from "@iconify/react/dist/iconify.js";
 import axiosInstance from '../axiosConfig';
 import './MasterLayout.css';
+import TimeAgo from 'react-timeago';
 
 const MasterLayout = ({ children }) => {
-    const { user, loading, logout } = useAuth();
+    const { user, logout } = useAuth();
+    const {
+        generalNotifications,
+        messageNotifications,
+        removeNotification,
+        clearAllGeneralNotifications,
+        clearAllMessageNotifications
+    } = useSocketContext();
+
     const [scrolled, setScrolled] = useState(false);
+    // --- Search State --- 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [showSearchResults, setShowSearchResults] = useState(false);
     const searchInputRef = useRef(null);
     const searchResultsRef = useRef(null);
-    const [users, setUsers] = useState([]);
+    const [users, setUsers] = useState([]); // For search results
+    // --- End Search State ---
 
-    // Mock data for notifications and chats - replace with actual data from your API
-    const [notifications, setNotifications] = useState([]);
-    const [chats, setChats] = useState([]);
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+    const [showNotificationDropdown, setShowNotificationDropdown] = useState(false); // For general notifications (bell)
+    const [showChatDropdown, setShowChatDropdown] = useState(false); // For message notifications (chat icon)
 
     const navigate = useNavigate();
     const location = useLocation();
-    const isProfilePage = location.pathname === '/profile' || location.pathname === '/professional-profile' || location.pathname === '/feed' || location.pathname === '/post-details' || location.pathname === '/chat';
-    const profileDropdownRef = useRef(null);
+    const notTransparent = ['/profile', '/professional-profile', '/feed', '/post-details', '/chat'].includes(location.pathname);
 
-    // This effect will add a scroll event listener to the window to change the navbar style based on scroll position
+    const profileDropdownRef = useRef(null);
+    const notificationDropdownRef = useRef(null); // Ref for bell dropdown
+    const chatDropdownRef = useRef(null); // Ref for chat dropdown
+
+    // Scroll effect
     useEffect(() => {
         const handleScroll = () => {
             const threshold = window.innerHeight * 0.1;
             setScrolled(window.scrollY > threshold);
         };
-
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Handle clicks outside of search results to close dropdown
+    // Click outside handler for ALL dropdowns
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (
-                searchResultsRef.current &&
-                !searchResultsRef.current.contains(event.target) &&
-                searchInputRef.current &&
-                !searchInputRef.current.contains(event.target)
-            ) {
+            // Close search results
+            if (searchResultsRef.current && !searchResultsRef.current.contains(event.target) && searchInputRef.current && !searchInputRef.current.contains(event.target)) {
                 setShowSearchResults(false);
             }
-
-            if (
-                profileDropdownRef.current &&
-                !profileDropdownRef.current.contains(event.target)
-            ) {
+            // Close profile dropdown
+            if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
                 setShowProfileDropdown(false);
             }
+            // Close notification dropdown
+            if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target)) {
+                setShowNotificationDropdown(false);
+            }
+            // Close chat dropdown
+            if (chatDropdownRef.current && !chatDropdownRef.current.contains(event.target)) {
+                setShowChatDropdown(false);
+            }
         };
-
         document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Fetch notifications and chats - replace with your actual API calls
+    // --- Fetch users for search --- 
     useEffect(() => {
-        fetchUsers();
-        // Mock API call for notifications
-        // const fetchNotifications = async () => {
-        //     try {
-        //         const response = await axiosInstance.get('/notifications');
-        //         setNotifications(response.data);
-        //     } catch (error) {
-        //         console.error('Error fetching notifications:', error);
-        //     }
-        // };
-
-        // Mock API call for chats
-        // const fetchChats = async () => {
-        //     try {
-        //         const response = await axiosInstance.get('/chats');
-        //         setChats(response.data);
-        //     } catch (error) {
-        //         console.error('Error fetching chats:', error);
-        //     }
-        // };
-
-        // fetchNotifications();
-        // fetchChats();
-
-        // For now, using empty arrays
-        setNotifications([]);
-        setChats([]);
-    }, []);
-
-    const fetchUsers = async () => {
-        try {
-            const response = await axiosInstance.get('/user');
-            setUsers(response.data);
-        } catch (error) {
-            console.log("Error fetching users: ", error);
+        const fetchUsers = async () => {
+            try {
+                const response = await axiosInstance.get('/user');
+                setUsers(response.data);
+            } catch (error) {
+                console.log("Error fetching users: ", error);
+            }
         }
-    }
+        if (user.id) {
+            fetchUsers();
+        }
+    }, [user.id]);
+    // --- End Fetch users ---
 
     const handleLogout = async () => {
-        await logout();       // Wait until logout finishes
-        navigate('/');        // Then navigate to home
+        await logout();
+        navigate('/');
         setShowProfileDropdown(false);
     };
 
+    // --- Search Handlers ---
     const handleSearch = (e) => {
         e.preventDefault();
-        // If there are search results and the first one is selected, navigate to it
         if (searchResults.length > 0) {
-            const firstResult = searchResults[0];
-            handleUserSelect(firstResult);
+            handleUserSelect(searchResults[0]);
         }
     };
 
     const handleSearchInputChange = (e) => {
         const query = e.target.value;
         setSearchQuery(query);
-
         if (query.trim().length > 0) {
-            // Filter users by name or skills
-            const filteredUsers = users.filter(user => {
-                // Check if name matches (case insensitive)
-                const nameMatch = user.name.toLowerCase().includes(query.toLowerCase());
-
-                // Check if any skills match (for professionals only)
+            const filteredUsers = users.filter(u => {
+                const nameMatch = u.name.toLowerCase().includes(query.toLowerCase());
                 let skillMatch = false;
-                if (user.role === 'professional' && user.professionalProfileId && user.professionalProfileId.skills) {
-                    skillMatch = user.professionalProfileId.skills.some(skill =>
-                        skill.toLowerCase().includes(query.toLowerCase())
-                    );
+                if (u.role === 'professional' && u.professionalProfileId?.skills) {
+                    skillMatch = u.professionalProfileId.skills.some(skill => skill.toLowerCase().includes(query.toLowerCase()));
                 }
-
                 return nameMatch || skillMatch;
             });
-
             setSearchResults(filteredUsers);
             setShowSearchResults(true);
         } else {
@@ -151,55 +128,83 @@ const MasterLayout = ({ children }) => {
     const handleUserSelect = (selectedUser) => {
         setSearchQuery('');
         setShowSearchResults(false);
-
-        if (selectedUser.role === 'professional') {
-            navigate('/professional-profile', { state: { viewedUserId: selectedUser._id } });
-        } else if (selectedUser.role === 'homeowner') {
-            navigate('/profile', { state: { viewedUserId: selectedUser._id } });
-        }
+        const targetPath = selectedUser.role === 'professional' ? '/professional-profile' : '/profile';
+        navigate(targetPath, { state: { viewedUserId: selectedUser._id } });
     };
+    // --- End Search Handlers ---
 
     const handleProfileClick = () => {
-        if (user.role === 'homeowner') {
-            navigate('/profile');
-        } else if (user.role === 'professional') {
-            navigate('/professional-profile');
-        }
+        const targetPath = user.role === 'professional' ? '/professional-profile' : '/profile';
+        navigate(targetPath);
         setShowProfileDropdown(false);
     };
 
-    // Function to get user skills as a string
+    // --- Get User Skills (for search results) ---
     const getUserSkills = (user) => {
-        if (user.role === 'professional' &&
-            user.professionalProfileId &&
-            user.professionalProfileId.skills &&
-            user.professionalProfileId.skills.length > 0) {
-            return user.professionalProfileId.skills.join(', ');
-        }
-        return '';
+        return user.role === 'professional' && user.professionalProfileId?.skills?.length > 0
+            ? user.professionalProfileId.skills.join(', ')
+            : '';
+    };
+    // --- End Get User Skills ---
+
+    const toggleProfileDropdown = () => setShowProfileDropdown(!showProfileDropdown);
+    const toggleNotificationDropdown = () => {
+        setShowNotificationDropdown(!showNotificationDropdown);
+        setShowChatDropdown(false); // Close other dropdown
+    };
+    const toggleChatDropdown = () => {
+        setShowChatDropdown(!showChatDropdown);
+        setShowNotificationDropdown(false); // Close other dropdown
     };
 
-    const toggleProfileDropdown = () => {
-        setShowProfileDropdown(!showProfileDropdown);
+    // Unified handler for clicking any notification item
+    const handleNotificationItemClick = (notification) => {
+        // Determine navigation target based on type
+        if (notification.type === 'new_message' && notification.data?.chatRoomId) {
+            navigate('/chat', { state: { chatRoomId: notification.data.chatRoomId } });
+        } else if (notification.type === 'hired' && notification.data?.projectId) {
+            navigate('/post-details', { state: { postId: notification.data.projectId } });
+        } else if (notification.type === 'new_bid' && notification.data?.projectId) {
+            navigate('/post-details', { state: { postId: notification.data.projectId } });
+        }
+
+        removeNotification(notification);
+
+        if (notification.type === 'new_message') {
+            setShowChatDropdown(false);
+        } else {
+            setShowNotificationDropdown(false);
+        }
+    };
+
+    // Function to format notification content
+    const formatNotification = (notification) => {
+        switch (notification.type) {
+            case 'new_message':
+                const senderName = notification.data?.message?.sender?.name || 'Someone';
+                const messageContent = notification.data?.message?.content || 'sent a message';
+                const truncatedContent = messageContent.length > 30 ? messageContent.substring(0, 27) + '...' : messageContent;
+                return `${senderName}: "${truncatedContent}"`;
+            case 'hired':
+                return `You were hired for: ${notification.data?.projectTitle || 'a project'}!`;
+            case 'new_bid':
+                return `New bid on: ${notification.data?.projectTitle || 'your post'}`;
+            default:
+                return `New notification: ${notification.type}`;
+        }
     };
 
     return (
         <>
             <Navbar
                 expand="lg"
-                className={`py-2 fixed-top ${(scrolled || isProfilePage) ? 'bg-white shadow-sm' : 'bg-transparent'}`}
+                className={`py-2 fixed-top ${(scrolled || notTransparent) ? 'bg-white shadow-sm' : 'bg-transparent'}`}
             >
                 <Container>
-                    {/* Brand on the left */}
-                    <Navbar.Brand as={Link} to="/" className="me-0 me-md-3 brand-logo">
-                        HSMP
-                    </Navbar.Brand>
-
-                    {/* Hamburger menu */}
+                    <Navbar.Brand as={Link} to="/" className="me-0 me-md-3 brand-logo">HSMP</Navbar.Brand>
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
-
                     <Navbar.Collapse id="basic-navbar-nav">
-                        {/* Search box in center */}
+                        {/* --- Search Bar --- */}
                         {user.id && (
                             <div className="search-wrapper d-flex justify-content-center flex-grow-1">
                                 <div className="position-relative search-container">
@@ -210,70 +215,38 @@ const MasterLayout = ({ children }) => {
                                                 placeholder="Search users by name or skill..."
                                                 value={searchQuery}
                                                 onChange={handleSearchInputChange}
-                                                onFocus={() => {
-                                                    if (searchQuery.trim().length > 0) {
-                                                        setShowSearchResults(true);
-                                                    }
-                                                }}
+                                                onFocus={() => { if (searchQuery.trim().length > 0) setShowSearchResults(true); }}
                                                 ref={searchInputRef}
                                                 className="search-input"
                                                 autoComplete="off"
                                             />
-                                            <Button variant="outline-secondary" type="submit" className="search-button">
-                                                <FaSearch />
-                                            </Button>
+                                            <Button variant="outline-secondary" type="submit" className="search-button"><FaSearch /></Button>
                                         </InputGroup>
                                     </Form>
-
                                     {/* Search Results Dropdown */}
-                                    {showSearchResults && searchResults.length > 0 && (
+                                    {showSearchResults && (
                                         <div className="search-results-dropdown" ref={searchResultsRef}>
                                             <ListGroup>
-                                                {searchResults.map((result) => (
-                                                    <ListGroup.Item
-                                                        key={result._id}
-                                                        action
-                                                        onClick={() => handleUserSelect(result)}
-                                                        className="search-result-item"
-                                                    >
-                                                        <div className="d-flex align-items-center">
-                                                            <div className="search-result-avatar me-2">
-                                                                <img
-                                                                    src={result.profilePictureUrl || "https://via.placeholder.com/40"}
-                                                                    alt={result.name}
-                                                                    className="rounded-circle"
-                                                                    width="40"
-                                                                    height="40"
-                                                                />
-                                                            </div>
-                                                            <div className="search-result-info">
-                                                                <div className="search-result-name">{result.name}</div>
-                                                                <div className="search-result-details">
-                                                                    <span className={`badge ${result.role === 'professional' ? 'bg-primary' : 'bg-success'} me-2`}>
-                                                                        {result.role === 'professional' ? 'Professional' : 'Homeowner'}
-                                                                    </span>
-                                                                    {result.role === 'professional' && getUserSkills(result) && (
-                                                                        <span className="search-result-skills">
-                                                                            <FaTools className="me-1" size={12} />
-                                                                            {getUserSkills(result)}
-                                                                        </span>
-                                                                    )}
+                                                {searchResults.length > 0 ? (
+                                                    searchResults.map((result) => (
+                                                        <ListGroup.Item key={result._id} action onClick={() => handleUserSelect(result)} className="search-result-item">
+                                                            <div className="d-flex align-items-center">
+                                                                <img src={result.profilePictureUrl || "https://via.placeholder.com/40"} alt={result.name} className="rounded-circle me-2" width="40" height="40" />
+                                                                <div className="search-result-info">
+                                                                    <div className="search-result-name">{result.name}</div>
+                                                                    <div className="search-result-details">
+                                                                        <span className={`badge ${result.role === 'professional' ? 'bg-primary' : 'bg-success'} me-2 text-capitalize`}>{result.role}</span>
+                                                                        {result.role === 'professional' && getUserSkills(result) && (
+                                                                            <span className="search-result-skills"><FaTools className="me-1" size={12} />{getUserSkills(result)}</span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    </ListGroup.Item>
-                                                ))}
-                                            </ListGroup>
-                                        </div>
-                                    )}
-
-                                    {/* No Results Message */}
-                                    {showSearchResults && searchQuery.trim().length > 0 && searchResults.length === 0 && (
-                                        <div className="search-results-dropdown" ref={searchResultsRef}>
-                                            <ListGroup>
-                                                <ListGroup.Item className="text-center text-muted">
-                                                    No users found matching "{searchQuery}"
-                                                </ListGroup.Item>
+                                                        </ListGroup.Item>
+                                                    ))
+                                                ) : (
+                                                    <ListGroup.Item className="text-center text-muted">No users found matching "{searchQuery}"</ListGroup.Item>
+                                                )}
                                             </ListGroup>
                                         </div>
                                     )}
@@ -284,84 +257,113 @@ const MasterLayout = ({ children }) => {
                         {/* Right side navigation */}
                         <Nav className="ms-auto align-items-center">
                             {!user.id ? (
+                                /* Login/Signup Buttons */
                                 <div className="d-flex gap-2">
-                                    <NavLink to='/login'>
-                                        <Button className="button btn-orange">Login</Button>
-                                    </NavLink>
-                                    <NavLink to='/signup'>
-                                        <Button className="button btn-primary">Sign Up</Button>
-                                    </NavLink>
+                                    <NavLink to='/login'><Button className="button btn-orange">Login</Button></NavLink>
+                                    <NavLink to='/signup'><Button className="button btn-primary">Sign Up</Button></NavLink>
                                 </div>
                             ) : (
+                                /* Logged-in User Icons */
                                 <>
-                                    <Nav.Link as={Link} to="/feed" className="nav-link-text">
-                                        Feed
-                                    </Nav.Link>
+                                    <Nav.Link as={Link} to="/feed" className="nav-link-text">Feed</Nav.Link>
 
-                                    {/* Chat Icon */}
-                                    <div className="nav-icon-container">
-                                        <div className="nav-icon-link">
+                                    {/* Chat Icon & Dropdown */}
+                                    <div className="nav-icon-container position-relative" ref={chatDropdownRef}>
+                                        <div className="nav-icon-link" onClick={toggleChatDropdown} style={{ cursor: 'pointer' }}>
                                             <Icon icon="lucide:message-circle" className="icon text-xl" />
-                                            {chats.length > 0 && (
+                                            {messageNotifications.length > 0 && (
                                                 <Badge pill bg="danger" className="notification-badge">
-                                                    {chats.length}
+                                                    {messageNotifications.length}
                                                 </Badge>
                                             )}
                                         </div>
+                                        {showChatDropdown && (
+                                            <Dropdown.Menu show className="chat-dropdown-menu" align="end">
+                                                <Dropdown.Header className="d-flex justify-content-between align-items-center">
+                                                    New Messages
+                                                    {messageNotifications.length > 0 && (
+                                                        <Button variant="link" size="sm" onClick={(e) => { e.stopPropagation(); clearAllMessageNotifications(); }}>Clear All</Button>
+                                                    )}
+                                                </Dropdown.Header>
+                                                <Dropdown.Divider />
+                                                <div className="notification-list">
+                                                    {messageNotifications.length > 0 ? (
+                                                        messageNotifications.map((notif, index) => (
+                                                            <Dropdown.Item key={`msg-${index}`} onClick={() => handleNotificationItemClick(notif)} className="notification-item">
+                                                                <div className="notification-content">{formatNotification(notif)}</div>
+                                                                <div className="notification-time">
+                                                                    <TimeAgo date={notif.timestamp} />
+                                                                </div>
+                                                            </Dropdown.Item>
+                                                        ))
+                                                    ) : (
+                                                        <Dropdown.Item disabled className="text-center text-muted">No new messages</Dropdown.Item>
+                                                    )}
+                                                </div>
+                                                <Dropdown.Divider />
+                                                <Dropdown.Item as={Link} to="/chat" onClick={() => setShowChatDropdown(false)} className="text-center see-all-link">
+                                                    See all Chats
+                                                </Dropdown.Item>
+                                            </Dropdown.Menu>
+                                        )}
                                     </div>
 
-                                    {/* Notification Icon */}
-                                    <div className="nav-icon-container">
-                                        <div className="nav-icon-link">
+                                    {/* Notification (Bell) Icon & Dropdown */}
+                                    <div className="nav-icon-container position-relative" ref={notificationDropdownRef}>
+                                        <div className="nav-icon-link" onClick={toggleNotificationDropdown} style={{ cursor: 'pointer' }}>
                                             <Icon icon="lucide:bell" className="icon text-xl" />
-                                            {notifications.length > 0 && (
+                                            {generalNotifications.length > 0 && (
                                                 <Badge pill bg="danger" className="notification-badge">
-                                                    {notifications.length}
+                                                    {generalNotifications.length}
                                                 </Badge>
                                             )}
                                         </div>
+                                        {showNotificationDropdown && (
+                                            <Dropdown.Menu show className="notification-dropdown-menu" align="end">
+                                                <Dropdown.Header className="d-flex justify-content-between align-items-center">
+                                                    Notifications
+                                                    {generalNotifications.length > 0 && (
+                                                        <Button variant="link" size="sm" onClick={(e) => { e.stopPropagation(); clearAllGeneralNotifications(); }}>Clear All</Button>
+                                                    )}
+                                                </Dropdown.Header>
+                                                <Dropdown.Divider />
+                                                <div className="notification-list">
+                                                    {generalNotifications.length > 0 ? (
+                                                        generalNotifications.map((notif, index) => (
+                                                            <Dropdown.Item key={`gen-${index}`} onClick={() => handleNotificationItemClick(notif)} className="notification-item">
+                                                                <div className="notification-content">{formatNotification(notif)}</div>
+                                                                <div className="notification-time">
+                                                                    <TimeAgo date={notif.timestamp} />
+                                                                </div>
+                                                            </Dropdown.Item>
+                                                        ))
+                                                    ) : (
+                                                        <Dropdown.Item disabled className="text-center text-muted">No new notifications</Dropdown.Item>
+                                                    )}
+                                                </div>
+                                            </Dropdown.Menu>
+                                        )}
                                     </div>
 
                                     {/* Profile Dropdown */}
-                                    <div className="nav-icon-container position-relative">
-                                        <div
-                                            className="nav-icon-link profile-icon"
-                                            onClick={toggleProfileDropdown}
-                                        >
-                                            <img
-                                                src={user.profilePictureUrl}
-                                                alt={user.name}
-                                                className="rounded-circle"
-                                                width="40"
-                                                height="40"
-                                            />
+                                    <div className="nav-icon-container position-relative" ref={profileDropdownRef}>
+                                        <div className="nav-icon-link profile-icon" onClick={toggleProfileDropdown} style={{ cursor: 'pointer' }}>
+                                            <img src={user.profilePictureUrl || "https://via.placeholder.com/40"} alt={user.name} className="rounded-circle" width="40" height="40" />
                                         </div>
-
                                         {showProfileDropdown && (
-                                            <div className="profile-dropdown-menu" ref={profileDropdownRef}>
-                                                <div className="profile-dropdown-header">
-                                                    <div className="d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <div className="fw-bold">{user.name}</div>
-                                                            <div className="text-muted">{user.role}</div>
-                                                        </div>
-                                                        <button
-                                                            className="btn-close"
-                                                            onClick={() => setShowProfileDropdown(false)}
-                                                        ></button>
-                                                    </div>
-                                                </div>
-
-                                                <div className="profile-dropdown-item profile icon" onClick={handleProfileClick}>
-                                                    <Icon icon="lucide:user" className=" text-sm me-2" />
-                                                    My Profile
-                                                </div>
-
-                                                <div className="profile-dropdown-item logout icon" onClick={handleLogout}>
-                                                    <Icon icon="lucide:power" className="text-sm me-2" />
-                                                    Log Out
-                                                </div>
-                                            </div>
+                                            <Dropdown.Menu show className="profile-dropdown-menu" align="end">
+                                                <Dropdown.Header className='profile-dropdown-header'>
+                                                    <div className="fw-bold">{user.name}</div>
+                                                    <div className="text-muted text-capitalize">{user.role}</div>
+                                                </Dropdown.Header>
+                                                <Dropdown.Divider />
+                                                <Dropdown.Item className='profile' onClick={handleProfileClick}>
+                                                    <Icon icon="lucide:user" className="me-2" /> My Profile
+                                                </Dropdown.Item>
+                                                <Dropdown.Item className='logout' onClick={handleLogout}>
+                                                    <Icon icon="lucide:power" className="me-2" /> Log Out
+                                                </Dropdown.Item>
+                                            </Dropdown.Menu>
                                         )}
                                     </div>
                                 </>
@@ -370,7 +372,6 @@ const MasterLayout = ({ children }) => {
                     </Navbar.Collapse>
                 </Container>
             </Navbar>
-
             <main className="main-content">
                 {children}
             </main>

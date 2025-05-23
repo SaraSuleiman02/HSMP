@@ -166,6 +166,8 @@
     border: 1px solid #e4e6eb;
     margin: 15px !important;
     border-radius: 16px;
+    min-height: 84vh;
+    max-height: 85vh;
 }
 
 .chat-window-empty {

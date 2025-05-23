@@ -73,12 +73,20 @@ export const createReview = async (req, res) => {
         professionalProfile.averageRating = averageRating;
         await professionalProfile.save();
 
-        // 🔔 Notify the professional via socket
+        // Notify the professional via socket
         const socketId = getConnectedUsers().get(project.assignedProfessionalId.toString());
         if (socketId) {
-            req.io.to(socketId).emit('review', {
-                message: `You've received a new review for project: ${project.title}`,
-                projectId: project._id
+            req.io.to(socketId).emit('notification', {
+                senderId: id,
+                receiverId: project.assignedProfessionalId.toString(),
+                type: 'review',
+                data: {
+                    projectId: project._id,
+                    projectTitle: project.title,
+                    rating,
+                    comment
+                },
+                timestamp: new Date()
             });
         }
 

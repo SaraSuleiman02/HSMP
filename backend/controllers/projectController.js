@@ -238,9 +238,15 @@ export const hireProfessional = async (req, res) => {
 
         const socketId = getConnectedUsers().get(bid.professionalId.toString());
         if (socketId) {
-            req.io.to(socketId).emit('hired', {
-                message: `You've been hired for project: ${project.title}`,
-                projectId: project._id
+            req.io.to(socketId).emit('notification', {
+                senderId: project.homeownerId,
+                receiverId: bid.professionalId.toString(),
+                type: 'hired', // Custom notification type
+                data: {
+                    projectId: project._id,
+                    projectTitle: project.title
+                },
+                timestamp: new Date()
             });
         }
 
@@ -370,7 +376,7 @@ export const uploadPhotoAfter = async (req, res) => {
         project.photoAfter = photoAfterUrl;
         await project.save();
 
-        return res.status(200).json({ message: "Photo Added successfully!" , project});
+        return res.status(200).json({ message: "Photo Added successfully!", project });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
