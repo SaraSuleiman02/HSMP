@@ -294,7 +294,7 @@ const PostDetails = () => {
             <div className="post-details-container padding-medium d-flex flex-column align-items-center">
                 <ToastContainer />
                 <div className="container">
-                    <div className="post-details-inner-container">
+                    <div className="post-details-inner-container" data-aos="slide-right">
                         {/* Post Card */}
                         <Card key={post._id} className="mb-4 post-details-card facebook-style-card">
                             <Card.Body>

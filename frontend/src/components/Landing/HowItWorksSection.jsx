@@ -5,7 +5,7 @@ import familyImage from '../../images/family.png';
 function HowItWorksSection() {
     return (
         <>
-            <div className="padding-meduim" id="how-it-works" style={{ marginBottom: "70px" }}>
+            <div data-aos="fade-up" className="padding-meduim" id="how-it-works" style={{ marginBottom: "70px" }}>
                 <h3 style={{ marginBottom: "20px", marginLeft:"60px"
                  }}>How It works</h3>
                 <div className="d-flex gap-5 justify-content-center flex-wrap">
@@ -48,13 +48,13 @@ function HowItWorksSection() {
             </div>
 
             <div className="padding-medium bg-gradient mx-5 mt-1 rounded-3 d-flex justify-content-between align-items-center flex-wrap">
-                <div className="jordan-section d-flex flex-column flex-grow-1 px-3">
+                <div data-aos="fade-up-right" className="jordan-section d-flex flex-column flex-grow-1 px-3">
                     <h3>Jordan’s first home services platform</h3>
                     <p>where trust and reliability bring homeowners and professionals together.</p>
                     <a href="/login" className="button cta-button align-self-start mt-2">Get Started</a>
                 </div>
 
-                <div className="jordan-image-container">
+                <div data-aos="fade-up-left" className="jordan-image-container">
                     <div className="jordan-image-underlay"></div>
                     <img src={familyImage} alt="Happy Family" className="jordan-main-image" />
                 </div>

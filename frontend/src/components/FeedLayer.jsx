@@ -296,7 +296,9 @@ const FeedLayer = () => {
             <div className="feed-container padding-medium">
                 <div className="d-flex flex-column flex-md-row">
                     {/* Filter Sidebar */}
-                    <div className={`filter-sidebar ${showFilters ? 'show' : 'hide'}`}>
+                    <div className={`filter-sidebar ${showFilters ? 'show' : 'hide'}`} data-aos="flip-left"
+                        data-aos-easing="ease-out-cubic"
+                        data-aos-duration="1500">
                         <div className="filter-header d-flex justify-content-between align-items-center mb-3">
                             <h5 className="mb-0"><FaFilter className="me-2" /> Filters</h5>
                             <button
@@ -419,7 +421,8 @@ const FeedLayer = () => {
                     </div>
 
                     {/* Posts Container */}
-                    <div className="posts-container">
+                    <div className="posts-container" data-aos="fade-left" data-aos-easing="ease-out-cubic"
+                        data-aos-duration="1500">
                         <ToastContainer />
                         {user.role === "homeowner" && (
                             <div

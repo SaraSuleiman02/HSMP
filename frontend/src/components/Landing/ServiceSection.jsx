@@ -3,7 +3,7 @@ import { Icon } from '@iconify/react';
 
 function ServiceSection() {
     return (
-        <div className="padding-large d-flex gap-5 justify-content-center flex-wrap" id="services" style={{ marginTop: "-50px"}}>
+        <div data-aos="fade-down" className="padding-large d-flex gap-5 justify-content-center flex-wrap" id="services" style={{ marginTop: "-50px"}}>
             <div className="service-card">
                 <Icon icon="mdi-light:home" width="24" height="24" className="mb-1" />
                 <h4>Home Service</h4>

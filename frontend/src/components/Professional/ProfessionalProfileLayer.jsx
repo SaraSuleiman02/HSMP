@@ -157,7 +157,7 @@ const ProfessionalProfileLayer = () => {
             <ToastContainer position="top-right" autoClose={3000} />
             <Container className="my-1">
                 {/* Top Profile Card */}
-                <Card className="mb-4">
+                <Card className="mb-4" data-aos="slide-right">
                     <Card.Img
                         variant="top"
                         src={profileBg}
@@ -240,7 +240,7 @@ const ProfessionalProfileLayer = () => {
                 </Card>
 
                 {/* Bottom Tabbed Card */}
-                <Card>
+                <Card data-aos="slide-left">
                     <Card.Header>
                         <Tabs
                             id="profile-tabs"

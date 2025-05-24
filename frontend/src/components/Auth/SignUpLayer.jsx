@@ -208,7 +208,9 @@ const SignUpLayer = () => {
             <Container className="mt-5 mb-5 padding-medium">
                 <Row className="justify-content-md-center">
                     <Col md={8}>
-                        <Card className='auth-form'>
+                        <Card className='auth-form' data-aos="flip-left"
+                            data-aos-easing="ease-out-cubic"
+                            data-aos-duration="1500">
                             <Card.Header as="h3" className="text-center" style={{ background: "#e0e7f7", borderTopRightRadius: "16px", borderTopLeftRadius: "16px" }}>Sign Up</Card.Header>
                             <Card.Body>
                                 {/* For both professioal and homeowner */}

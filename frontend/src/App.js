@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import ProtectedRoute from './components/PtotrctedRoute';
@@ -12,7 +12,14 @@ import PostDetails from './components/PostDetails';
 import ChatPage from './pages/ChatPage';
 import NotFoundPage from './pages/NotFoundPage';
 
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+
 function App() {
+  useEffect(() => {
+    AOS.init({ duration: 1500 });
+  }, []);
+
   return (
 
     <BrowserRouter>
@@ -56,12 +63,12 @@ function App() {
         {/* Redirect all other routes to 404 */}
         <Route path="*" element={<Navigate to="/404" replace />} />
 
-          {/* 404 Page */}
-          <Route path="/404" element={<NotFoundPage />} />
+        {/* 404 Page */}
+        <Route path="/404" element={<NotFoundPage />} />
 
         {/* Uncomment this if you have a feed page */}
         {/* <Route path="/feed" element={<FeedPage />} /> */}
-        
+
       </Routes>
     </BrowserRouter>
   );

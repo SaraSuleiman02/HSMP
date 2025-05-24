@@ -22,7 +22,9 @@ const testimonials = [
 
 const TestimonialCarousel = () => {
     return (
-        <div className="padding-medium">
+        <div className="padding-medium" data-aos="fade-down"
+            data-aos-easing="linear"
+            data-aos-duration="1400">
             <h3 className="text-center mb-4 text-black">What Our Users Say</h3>
             <div className="position-relative">
                 <Carousel

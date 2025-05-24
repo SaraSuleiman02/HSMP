@@ -422,7 +422,9 @@ const LoginLayer = () => {
                 <div className='auth-container'>
                     <Row className="justify-content-md-center">
                         <Col md={5}>
-                            <Card className='auth-form'>
+                            <Card className='auth-form'  data-aos="flip-left"
+                        data-aos-easing="ease-out-cubic"
+                        data-aos-duration="1500">
                                 <Card.Header as="h3" className="text-center" style={{ background: "#e0e7f7", borderTopRightRadius: "16px", borderTopLeftRadius: "16px" }}>
                                     {forgotPasswordMode ? 'Reset Password' : 'Login'}
                                 </Card.Header>
