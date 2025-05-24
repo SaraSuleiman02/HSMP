@@ -10,6 +10,7 @@ import ProfessionalProfilePage from './pages/ProfessionalProfilePage';
 import FeedPage from './pages/FeedPage';
 import PostDetails from './components/PostDetails';
 import ChatPage from './pages/ChatPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   return (
@@ -56,7 +57,7 @@ function App() {
         <Route path="*" element={<Navigate to="/404" replace />} />
 
           {/* 404 Page */}
-          <Route path="/404" element={<div>404 Not Found</div>} />
+          <Route path="/404" element={<NotFoundPage />} />
 
         {/* Uncomment this if you have a feed page */}
         {/* <Route path="/feed" element={<FeedPage />} /> */}

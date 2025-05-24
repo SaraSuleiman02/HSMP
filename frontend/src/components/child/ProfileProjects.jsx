@@ -51,6 +51,7 @@ const ProfileProjects = ({ proId }) => {
 
     const handleCloseModal = () => {
         setShowModal(false)
+        setSelecetdPost(null)
         fetchPosts();
     }
 

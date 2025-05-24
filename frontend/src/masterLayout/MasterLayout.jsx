@@ -35,7 +35,7 @@ const MasterLayout = ({ children }) => {
 
     const navigate = useNavigate();
     const location = useLocation();
-    const notTransparent = ['/profile', '/professional-profile', '/feed', '/post-details', '/chat'].includes(location.pathname);
+    const notTransparent = ['/profile', '/professional-profile', '/feed', '/post-details', '/chat', '/404'].includes(location.pathname);
 
     const profileDropdownRef = useRef(null);
     const notificationDropdownRef = useRef(null); // Ref for bell dropdown

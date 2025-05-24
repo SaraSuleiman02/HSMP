@@ -14,7 +14,7 @@ const FeedLayer = () => {
     const [filteredPosts, setFilteredPosts] = useState([]);
     const [visibleCount, setVisibleCount] = useState(3);
     const navigate = useNavigate();
-    const [showFilters, setShowFilters] = useState(true);
+    const [showFilters, setShowFilters] = useState(false);
     const [showAddPostModal, setShowAddPostModal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const fileInputRef = useRef(null);

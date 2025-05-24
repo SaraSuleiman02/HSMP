@@ -209,7 +209,7 @@ const SignUpLayer = () => {
                 <Row className="justify-content-md-center">
                     <Col md={8}>
                         <Card className='auth-form'>
-                            <Card.Header as="h3" className="text-center" style={{ background: "#e0e7f7" }}>Sign Up</Card.Header>
+                            <Card.Header as="h3" className="text-center" style={{ background: "#e0e7f7", borderTopRightRadius: "16px", borderTopLeftRadius: "16px" }}>Sign Up</Card.Header>
                             <Card.Body>
                                 {/* For both professioal and homeowner */}
                                 {step === 1 && (

@@ -133,6 +133,7 @@ const ChatSidebar = ({ onSelectUser }) => {
                             const isOnline = isUserOnline(otherParticipant._id);
                             const isTypingNow = isUserTyping(room._id, otherParticipant._id);
                             const unreadCount = getUnreadCount(room._id);
+                            console.log(getUnreadCount(room._id))
 
                             return (
                                 <ListGroup.Item

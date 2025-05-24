@@ -23,7 +23,7 @@ const DashBoardLayerTen = () => {
       <OverallReport />
 
       {/* PurchaseAndSales */}
-      <PurchaseAndSales />
+      {/* <PurchaseAndSales /> */}
 
     
     </div>

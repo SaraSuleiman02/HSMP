@@ -51,6 +51,7 @@ const ProfilePosts = ({ userId }) => {
 
     const handleCloseModal = () => {
         setShowModal(false)
+        setSelecetdPost(null)
         fetchPosts();
     }
 
