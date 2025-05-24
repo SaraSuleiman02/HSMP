@@ -1,6 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    useCallback,
+    useRef,
+} from 'react';
 import { io } from 'socket.io-client';
-import { useAuth } from './AuthContext'; // Assuming AuthContext is in the same directory or adjust path
+import { useAuth } from './AuthContext'; // Adjust path if needed
 
 const SocketContext = createContext(null);
 
@@ -10,12 +17,12 @@ export const SocketProvider = ({ children }) => {
     const { user, isAuthenticated } = useAuth();
     const [socket, setSocket] = useState(null);
     const [onlineUsers, setOnlineUsers] = useState(new Set());
-    const [generalNotifications, setGeneralNotifications] = useState([]); // For hired, new_bid, etc.
-    const [messageNotifications, setMessageNotifications] = useState([]); // Specifically for new_message
+    const [generalNotifications, setGeneralNotifications] = useState([]);
+    const [messageNotifications, setMessageNotifications] = useState([]);
     const [isConnected, setIsConnected] = useState(false);
     const notificationAudioRef = useRef(null);
 
-    // Initialize notification audio
+    // Load the notification sound
     useEffect(() => {
         notificationAudioRef.current = new Audio('/notification.mp3');
         notificationAudioRef.current.load();
@@ -23,8 +30,8 @@ export const SocketProvider = ({ children }) => {
 
     const playNotificationSound = useCallback(() => {
         if (notificationAudioRef.current) {
-            notificationAudioRef.current.play().catch(error => {
-                console.error("Error playing notification sound:", error);
+            notificationAudioRef.current.play().catch((error) => {
+                console.error('Error playing notification sound:', error);
             });
         }
     }, []);
@@ -32,7 +39,7 @@ export const SocketProvider = ({ children }) => {
     // Effect to manage socket connection based on authentication status
     useEffect(() => {
         if (isAuthenticated && user?.id) {
-            const newSocket = io('http://localhost:8000', { // Replace with your server URL
+            const newSocket = io('http://localhost:8000', {
                 withCredentials: false,
                 transports: ['websocket'],
                 reconnection: true,
@@ -53,9 +60,6 @@ export const SocketProvider = ({ children }) => {
                 console.log('Socket disconnected:', reason);
                 setIsConnected(false);
                 setOnlineUsers(new Set());
-                // Optionally clear notifications on disconnect?
-                // setGeneralNotifications([]);
-                // setMessageNotifications([]);
             });
 
             newSocket.on('connect_error', (error) => {
@@ -63,30 +67,34 @@ export const SocketProvider = ({ children }) => {
                 setIsConnected(false);
             });
 
-            // Listener for online status updates
+            // Handle status updates for a single user
             newSocket.on('userStatus', ({ userId, isOnline }) => {
-                console.log(`Received status update: User ${userId} is ${isOnline ? 'online' : 'offline'}`);
-                setOnlineUsers(prev => {
+                console.log(
+                    `Received status update: User ${userId} is ${isOnline ? 'online' : 'offline'
+                    }`
+                );
+                setOnlineUsers((prev) => {
                     const newSet = new Set(prev);
-                    if (isOnline) {
-                        newSet.add(userId);
-                    } else {
-                        newSet.delete(userId);
-                    }
+                    isOnline ? newSet.add(userId) : newSet.delete(userId);
                     return newSet;
                 });
             });
 
-            // Listener for ALL notifications
+            // ✅ Full list of online users
+            newSocket.on('onlineUsers', (usersArray) => {
+                console.log('Full online users list received:', usersArray);
+                setOnlineUsers(new Set(usersArray));
+            });
+
+            // All notifications
             newSocket.on('notification', (notification) => {
                 console.log('Received notification:', notification);
 
                 // Sort notification into the correct list
                 if (notification.type === 'new_message') {
-                    setMessageNotifications(prev => [notification, ...prev]);
+                    setMessageNotifications((prev) => [notification, ...prev]);
                 } else {
-                    // Assume others (hired, new_bid, etc.) go to general
-                    setGeneralNotifications(prev => [notification, ...prev]);
+                    setGeneralNotifications((prev) => [notification, ...prev]);
                 }
 
                 // Play sound for any new notification
@@ -96,7 +104,14 @@ export const SocketProvider = ({ children }) => {
             // Cleanup on component unmount or when user logs out
             return () => {
                 console.log('Disconnecting socket...');
+                newSocket.off('connect');
+                newSocket.off('disconnect');
+                newSocket.off('connect_error');
+                newSocket.off('userStatus');
+                newSocket.off('onlineUsers');
+                newSocket.off('notification');
                 newSocket.disconnect();
+
                 setSocket(null);
                 setIsConnected(false);
                 setOnlineUsers(new Set());
@@ -104,7 +119,7 @@ export const SocketProvider = ({ children }) => {
                 setMessageNotifications([]);
             };
         } else if (socket) {
-            // If user logs out, disconnect the socket
+            // Clean up if the user logs out
             console.log('User logged out, disconnecting socket...');
             socket.disconnect();
             setSocket(null);
@@ -116,30 +131,38 @@ export const SocketProvider = ({ children }) => {
 
     }, [isAuthenticated, user?.id, playNotificationSound]);
 
-    const isUserOnline = useCallback((userId) => {
-        return onlineUsers.has(userId);
-    }, [onlineUsers]);
+    const isUserOnline = useCallback(
+        (userId) => onlineUsers.has(userId),
+        [onlineUsers]
+    );
 
-    const sendNotification = useCallback((notificationData) => {
-        if (socket && isConnected) {
-            socket.emit('sendNotification', notificationData, (ack) => {
-                if (ack?.success) {
-                    console.log('Custom notification sent successfully.');
-                } else {
-                    console.error('Failed to send custom notification:', ack?.error);
-                }
-            });
-        } else {
-            console.error('Socket not connected, cannot send notification.');
-        }
-    }, [socket, isConnected]);
+    const sendNotification = useCallback(
+        (notificationData) => {
+            if (socket && isConnected) {
+                socket.emit('sendNotification', notificationData, (ack) => {
+                    if (ack?.success) {
+                        console.log('Custom notification sent successfully.');
+                    } else {
+                        console.error('Failed to send custom notification:', ack?.error);
+                    }
+                });
+            } else {
+                console.error('Socket not connected, cannot send notification.');
+            }
+        },
+        [socket, isConnected]
+    );
 
     // Function to remove a specific notification (can be used by both dropdowns)
     const removeNotification = (notificationToRemove) => {
         if (notificationToRemove.type === 'new_message') {
-            setMessageNotifications(prev => prev.filter(n => n !== notificationToRemove));
+            setMessageNotifications((prev) =>
+                prev.filter((n) => n !== notificationToRemove)
+            );
         } else {
-            setGeneralNotifications(prev => prev.filter(n => n !== notificationToRemove));
+            setGeneralNotifications((prev) =>
+                prev.filter((n) => n !== notificationToRemove)
+            );
         }
     };
 
@@ -159,12 +182,12 @@ export const SocketProvider = ({ children }) => {
         isUserOnline,
         generalNotifications,
         messageNotifications,
-        setGeneralNotifications, // Expose setters if needed, e.g., for marking read
+        setGeneralNotifications,
         setMessageNotifications,
         sendNotification,
-        removeNotification, // Expose function to remove a specific notification
+        removeNotification,
         clearAllGeneralNotifications,
-        clearAllMessageNotifications
+        clearAllMessageNotifications,
     };
 
     return (

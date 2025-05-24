@@ -9,12 +9,34 @@ export const configureSocket = (io) => {
         console.log('A user connected:', socket.id);
 
         // Register the user with their ID
-        socket.on('register', (userId) => {
+        socket.on('register', async (userId) => {
             connectedUsers.set(userId, socket.id);
             console.log(`User ${userId} registered with socket ID ${socket.id}`);
 
-            // Broadcast user online status
+            // Broadcast to others that this user is online
             broadcastUserStatus(io, userId, true);
+
+            try {
+                // Get all chat rooms this user is a participant in
+                const chatRooms = await ChatRoom.find({ participants: userId });
+
+                // Collect IDs of online users who share chat rooms with this user
+                const onlineUsersInRooms = new Set();
+
+                chatRooms.forEach(room => {
+                    room.participants.forEach(participantId => {
+                        const pid = participantId.toString();
+                        if (pid !== userId && connectedUsers.has(pid)) {
+                            onlineUsersInRooms.add(pid);
+                        }
+                    });
+                });
+
+                // Send the list of online users to the newly registered user
+                io.to(socket.id).emit('onlineUsers', Array.from(onlineUsersInRooms));
+            } catch (error) {
+                console.error('Error fetching online users for registered user:', error);
+            }
         });
 
         // Handle sending chat messages

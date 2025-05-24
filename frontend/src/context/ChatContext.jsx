@@ -299,12 +299,10 @@ export const ChatProvider = ({ children }) => {
     };
 
     const value = {
-        // Removed: socket - use from SocketContext directly if needed elsewhere
         chatRooms,
         activeChat,
         setActiveChat,
         messages,
-        // Removed: onlineUsers - use isUserOnline from SocketContext
         typingUsers,
         loading,
         error,
