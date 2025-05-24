@@ -55,6 +55,18 @@ const ProfileChild = ({ proProfile }) => {
         }
     }, [proProfile]);
 
+    useEffect(() => {
+        setPersonalInfo({
+            name: user.name || '',
+            email: user.email || '',
+            phone: user.phone || '',
+            address: {
+                street: user.address?.street || '',
+                city: user.address?.city || ''
+            }
+        });
+    }, [user]);
+
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
     const handlePersonalInfoChange = (e) => {
@@ -207,7 +219,6 @@ const ProfileChild = ({ proProfile }) => {
 
     return (
         <div>
-            <ToastContainer />
             <Card className="mb-4">
                 <Card.Header as="h5">Personal Information</Card.Header>
                 <Card.Body>

@@ -12,15 +12,23 @@ import { FaEdit } from 'react-icons/fa';
 import 'react-toastify/dist/ReactToastify.css';
 
 const ProfessionalProfileLayer = () => {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const location = useLocation();
-    const navigate = useNavigate(); // Initialize useNavigate
+    const navigate = useNavigate();
+    // Determine the ID of the user whose profile is being viewed
     const viewedUserId = location.state?.viewedUserId || user.id;
+    // Check if the profile being viewed is the logged-in user's own profile
     const isOwnProfile = viewedUserId === user.id;
+
     // State for active tab key
     const [key, setKey] = useState(isOwnProfile ? 'profile' : 'projects');
-    const [userData, setUserData] = useState([]);
-    const [proProfileData, setProProfileData] = useState([]);
+
+    // State for the data of the user whose profile is being viewed (if not the logged-in user)
+    const [viewedUserData, setViewedUserData] = useState(null);
+    // State for the professional profile details (applies to both own and viewed profiles)
+    const [proProfileData, setProProfileData] = useState(null);
+    // Loading state for fetching profile data
+    const [loadingProfile, setLoadingProfile] = useState(true);
 
     // Profile picture upload states
     const [showUploadModal, setShowUploadModal] = useState(false);
@@ -29,47 +37,69 @@ const ProfessionalProfileLayer = () => {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef(null);
 
+    // Effect to load the primary user data (either fetch for viewed user or use context for own profile)
     useEffect(() => {
+        setLoadingProfile(true);
         if (!isOwnProfile) {
-            fetchUserData(viewedUserId);
+            // If viewing someone else's profile, fetch their user data
+            const fetchViewedUserData = async () => {
+                try {
+                    const response = await axiosInstance.get(`/user/${viewedUserId}`);
+                    setViewedUserData(response.data);
+                } catch (error) {
+                    toast.error("Error Fetching user data for viewed profile");
+                    setViewedUserData(null); // Reset on error
+                } finally {
+                    setLoadingProfile(false);
+                }
+            };
+            fetchViewedUserData();
         } else {
-            setUserData(user);
+            // If viewing own profile, we use the 'user' object from context directly.
+            setViewedUserData(null);
+            setLoadingProfile(false);
         }
-    }, []);  // Empty dependency array to run once on mount
+        // This effect runs when the viewedUserId changes, or when isOwnProfile status changes.
+    }, [viewedUserId, isOwnProfile, navigate]);
 
+    // Effect to load the professional profile data based on the relevant user's professionalProfileId
     useEffect(() => {
-        if (userData && userData.professionalProfileId) {
-            fetchProProfileData(userData.professionalProfileId);
-        }
-    }, [userData]);  // This runs whenever userData is updated
+        // Determine whose profile data to fetch: the logged-in user or the viewed user
+        const profileHolder = isOwnProfile ? user : viewedUserData;
+        const profileId = profileHolder?.professionalProfileId;
 
-    const fetchUserData = async (userId) => {
-        try {
-            const response = await axiosInstance.get(`/user/${userId}`);
-            setUserData(response.data);
-        } catch (error) {
-            toast.error("Error Fetching user data");
+        if (profileId) {
+            // If a professionalProfileId exists, fetch the professional details
+            const fetchProData = async () => {
+                try {
+                    const response = await axiosInstance.get(`/profile/${profileId}`);
+                    setProProfileData(response.data);
+                } catch (error) {
+                    toast.error('Error fetching professional data!');
+                    setProProfileData(null); // Reset on error
+                }
+            };
+            fetchProData();
+        } else {
+            // If no professionalProfileId, reset the professional data state
+            setProProfileData(null);
         }
-    }
+        // This effect runs if the profile owner changes (isOwnProfile), or if the user/viewedUserData object updates.
+    }, [isOwnProfile, user, viewedUserData]);
 
-    const fetchProProfileData = async (profileId) => {
-        try {
-            const response = await axiosInstance.get(`/profile/${profileId}`);
-            setProProfileData(response.data);
-        } catch (error) {
-            toast.error('Error fetching professional data!');
-        }
-    }
+    // Determine which user object's data to display in the top card
+    const displayUser = isOwnProfile ? user : viewedUserData;
 
-    // Handle Chat button click
+    // Handle Chat button click - only relevant when viewing another professional's profile as a homeowner
     const handleChatClick = async () => {
+        if (isOwnProfile || user.role !== 'homeowner') return;
         try {
             // Create or get existing chat room directly with API call
             const response = await axiosInstance.post(`/chat/${viewedUserId}`);
             const chatRoom = response.data.chatRoom;
 
             if (chatRoom) {
-                // Navigate to chat page with chatRoomId in state
+                // Navigate to chat page
                 navigate('/chat', {
                     state: {
                         initialChatRoomId: chatRoom._id,
@@ -83,31 +113,27 @@ const ProfessionalProfileLayer = () => {
         }
     };
 
+    // Open the upload modal when the edit icon is clicked (only on own profile)
     const handleImageClick = () => {
         if (isOwnProfile) {
             setShowUploadModal(true);
         }
     };
 
+    // Handle file selection for profile picture upload
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Validate file size (5MB limit)
             if (file.size > 5 * 1024 * 1024) {
                 toast.error("Image size should be less than 5MB");
                 return;
             }
-
-            // Validate file type
             const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
             if (!validTypes.includes(file.type)) {
                 toast.error("Please select a valid image file (JPEG, PNG, or WebP)");
                 return;
             }
-
             setSelectedImage(file);
-
-            // Create preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result);
@@ -116,26 +142,24 @@ const ProfessionalProfileLayer = () => {
         }
     };
 
+    // Handle the actual image upload process
     const handleUploadImage = async () => {
         if (!selectedImage) {
             toast.warning("Please select an image to upload");
             return;
         }
-
         setIsUploading(true);
-
         const formData = new FormData();
         formData.append('profilePic', selectedImage);
 
         try {
+            // API call to update the user's profile picture (always uses logged-in user's ID)
             const response = await axiosInstance.put(`/user/${user.id}`, formData);
+            const newProfilePicUrl = response.data.profilePictureUrl || response.data.user?.profilePictureUrl;
 
-            // Update local state with new profile picture URL
-            setUserData(prevData => ({
-                ...prevData,
-                profilePictureUrl: response.data.profilePictureUrl || response.data.user?.profilePictureUrl
-            }));
-
+            if (newProfilePicUrl) {
+                updateUser({ profilePictureUrl: newProfilePicUrl });
+            }
             toast.success("Profile picture updated successfully!");
             setShowUploadModal(false);
             setSelectedImage(null);
@@ -148,29 +172,54 @@ const ProfessionalProfileLayer = () => {
         }
     };
 
+    // Trigger the hidden file input when the 'Select Image' button is clicked
     const triggerFileInput = () => {
         fileInputRef.current.click();
     };
 
+    // Show loading spinner while fetching data
+    if (loadingProfile) {
+        return (
+            <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
+                <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </Spinner>
+            </Container>
+        );
+    }
+
+    // Handle cases where the necessary user data couldn't be loaded
+    if (!displayUser) {
+        return (
+            <Container className="text-center my-5">
+                <h4>Error loading profile or profile not found.</h4>
+                <Button variant="primary" onClick={() => navigate('/')}>Go Home</Button>
+            </Container>
+        );
+    }
+
+    // Default profile picture URL if none is available
+    const profilePicture = displayUser?.profilePictureUrl || 'https://via.placeholder.com/150?text=No+Image';
+
     return (
-        <div className='padding-small'>
+        <div className='padding-small' style={{ marginTop: "-20px"}}>
             <ToastContainer position="top-right" autoClose={3000} />
             <Container className="my-1">
-                {/* Top Profile Card */}
+                {/* Top Profile Card: Displays data from 'displayUser' and 'proProfileData' */}
                 <Card className="mb-4" data-aos="slide-right">
                     <Card.Img
                         variant="top"
                         src={profileBg}
                         style={{ height: '200px', objectFit: 'cover' }}
                     />
-                    <Card.Body className="text-center d-flex flex-column">
+                    <Card.Body className="text-center d-flex flex-column align-items-center">
                         <div className="position-relative" style={{ marginTop: '-75px' }}>
                             <div className="position-relative d-inline-block">
                                 <Image
-                                    src={userData.profilePictureUrl}
+                                    src={profilePicture} // Use determined profile picture
                                     roundedCircle
-                                    className="border border-white border-5"
-                                    style={{ width: '150px', height: '150px', objectFit: 'cover', backgroundColor: '#f8f9fa' }}
+                                    className="border border-white border-5 bg-light"
+                                    style={{ width: '150px', height: '150px', objectFit: 'cover' }}
                                 />
                                 {isOwnProfile && (
                                     <div
@@ -184,58 +233,62 @@ const ProfessionalProfileLayer = () => {
                                             boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
                                             zIndex: 10
                                         }}
-                                        onClick={handleImageClick}
+                                        onClick={handleImageClick} // Opens the upload modal
+                                        title="Update Profile Picture"
                                     >
                                         <FaEdit color="white" size={18} />
                                     </div>
                                 )}
                             </div>
                         </div>
-                        <div className='d-flex justify-content-center gap-2'>
-                            <Card.Title className="mt-3 mb-3">{userData.name || "User"}</Card.Title>
-                            <Card.Text className="text-muted mt-3">({userData.role || ""})</Card.Text>
+                        <div className='d-flex justify-content-center align-items-center gap-2 mt-3 mb-1'>
+                            <Card.Title className="mb-0">{displayUser?.name || "User Name"}</Card.Title>
+                            <Card.Text className="text-muted mb-0">({displayUser?.role || "Role"})</Card.Text>
                         </div>
-                        <Card.Text className='align-self-center' style={{ maxWidth: "500px" }}>{proProfileData.bio}</Card.Text>
+                        {/* Display Professional Bio */}
+                        <Card.Text className='text-muted mb-3' style={{ maxWidth: "600px" }}>
+                            {proProfileData?.bio || (isOwnProfile ? 'No bio added yet.' : '')}
+                        </Card.Text>
 
-                        <hr />
+                        <hr className="w-75" />
 
-                        <div className='mt-3 d-flex justify-content-around flex-wrap'>
-                            <div className='d-felx felx-column' style={{ maxWidth: "200px" }}>
+                        {/* Display Professional Details */}
+                        <div className='mt-2 d-flex justify-content-around flex-wrap gap-3 w-100 px-md-5'>
+                            <div className='text-center' style={{ minWidth: "150px" }}>
                                 <h5>Skills</h5>
-                                <p>{proProfileData.skills?.join(', ')}</p>
+                                <p className="text-muted">{proProfileData?.skills?.join(', ') || 'N/A'}</p>
                             </div>
-                            <div className='d-felx felx-column' style={{ maxWidth: "200px" }}>
-                                <h5>Servie Area</h5>
-                                <p>{proProfileData.serviceArea?.join(', ')}</p>
+                            <div className='text-center' style={{ minWidth: "150px" }}>
+                                <h5>Service Area</h5>
+                                <p className="text-muted">{proProfileData?.serviceArea?.join(', ') || 'N/A'}</p>
                             </div>
-                            <div className='d-felx felx-column'>
-                                <h5>Experience Years</h5>
-                                <p>{proProfileData.experienceYears}</p>
+                            <div className='text-center'>
+                                <h5>Experience</h5>
+                                <p className="text-muted">{proProfileData?.experienceYears ? `${proProfileData.experienceYears} years` : 'N/A'}</p>
                             </div>
                             <div className='d-flex flex-column align-items-center'>
                                 <h5>Rating</h5>
                                 <div>
                                     {[1, 2, 3, 4, 5].map((star) => (
-                                        <span key={star} style={{ color: star <= proProfileData.averageRating ? '#ffc107' : '#e4e5e9', fontSize: '1.5rem' }}>
+                                        <span key={star} style={{ color: star <= (proProfileData?.averageRating || 0) ? '#ffc107' : '#e4e5e9', fontSize: '1.5rem' }}>
                                             ★
                                         </span>
                                     ))}
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            {user.role === 'homeowner' && (
-                                <span>
-                                    <Button
-                                        variant="primary"
-                                        className="me-2"
-                                        onClick={handleChatClick} // Add click handler
-                                    >
-                                        Chat
-                                    </Button>
-                                </span>
-                            )}
-                        </div>
+
+                        {/* Chat Button: Show only if homeowner is viewing another professional's profile */}
+                        {user.role === 'homeowner' && !isOwnProfile && (
+                            <div className="mt-3">
+                                <div
+                                    className='button cta-button'
+                                    onClick={handleChatClick}
+                                >
+                                    Chat
+                                </div>
+                            </div>
+                        )}
                     </Card.Body>
                 </Card>
 
@@ -246,35 +299,39 @@ const ProfessionalProfileLayer = () => {
                             id="profile-tabs"
                             activeKey={key}
                             onSelect={(k) => setKey(k)}
-                            className=" d-flex justify-content-center"
+                            className="mb-0 d-flex justify-content-center"
+                            fill
                         >
+                            {/* Profile Tab: Only shown for own profile */}
                             {isOwnProfile && (
-                                <Tab eventKey="profile" title="Profile">
-                                    {/* Profile Tab Content */}
+                                <Tab eventKey="profile" title="Edit Profile">
+                                    {/* Content is rendered below based on 'key' */}
                                 </Tab>
                             )}
+                            {/* Projects Tab: Always shown */}
                             <Tab eventKey="projects" title="Projects">
-                                {/* Posts Tab Content */}
+                                {/* Content is rendered below based on 'key' */}
                             </Tab>
+                            {/* Reviews Tab: Always shown */}
                             <Tab eventKey="reviews" title="Reviews">
-                                {/* Posts Tab Content */}
+                                {/* Content is rendered below based on 'key' */}
                             </Tab>
                         </Tabs>
                     </Card.Header>
                     <Card.Body>
-
+                        {/* Render content based on active tab */}
                         {key === 'profile' && isOwnProfile && (
+                            // Pass the fetched professional profile data to the child component
                             <ProfileChild proProfile={proProfileData} />
                         )}
-
                         {key === 'projects' && (
-                            <ProfileProjects proId={viewedUserId} />
+                            // Pass the ID of the profile being viewed (could be own or other)
+                            <ProfileProjects proId={viewedUserId} isOwnProfile={isOwnProfile} />
                         )}
-
                         {key === 'reviews' && (
+                            // Pass the ID of the profile being viewed
                             <ProfileReviews proId={viewedUserId} />
                         )}
-
                     </Card.Body>
                 </Card>
             </Container>
@@ -290,19 +347,19 @@ const ProfessionalProfileLayer = () => {
                             <Image
                                 src={imagePreview}
                                 roundedCircle
-                                className="border"
+                                className="border border-secondary"
                                 style={{ width: '150px', height: '150px', objectFit: 'cover' }}
                             />
                         ) : (
+                            // Show the current user's picture from context as the default
                             <Image
-                                src={userData.profilePictureUrl}
+                                src={user?.profilePictureUrl || 'https://via.placeholder.com/150?text=No+Image'}
                                 roundedCircle
-                                className="border"
+                                className="border border-secondary bg-light"
                                 style={{ width: '150px', height: '150px', objectFit: 'cover' }}
                             />
                         )}
                     </div>
-
                     <Form.Group controlId="profilePicture" className="mb-3">
                         <Form.Label>Choose a new profile picture</Form.Label>
                         <div className="d-grid">
@@ -318,16 +375,16 @@ const ProfessionalProfileLayer = () => {
                                 ref={fileInputRef}
                                 onChange={handleImageChange}
                                 accept="image/jpeg,image/png,image/jpg,image/webp"
-                                style={{ display: 'none' }}
+                                style={{ display: 'none' }} // Keep the input hidden
                             />
                             <Form.Text className="text-muted">
-                                Recommended: Square image, max 5MB (JPEG, PNG, or WebP)
+                                Recommended: Square image, max 5MB (JPEG, PNG, or WebP).
                             </Form.Text>
                         </div>
                     </Form.Group>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowUploadModal(false)}>
+                    <Button variant="secondary" onClick={() => { setShowUploadModal(false); setImagePreview(null); setSelectedImage(null); }}>
                         Cancel
                     </Button>
                     <Button
@@ -341,7 +398,7 @@ const ProfessionalProfileLayer = () => {
                                 Uploading...
                             </>
                         ) : (
-                            'Upload'
+                            'Upload Image'
                         )}
                     </Button>
                 </Modal.Footer>
