@@ -9,7 +9,7 @@ import { transporter } from '../utils/nodemailer.js';
 import Stripe from 'stripe';
 
 // Stripe Secret Key
-const stripe = Stripe('sk_test_51RSLPrCpt11BQaLBhMW0wOBmci9lkYGtK6oC867eAUbG3J6uti98SZWTrMHPfpSD2nmtlsPETnvXbRuAfhYuym5U00qxW1IcuN');
+const stripe = Stripe(process.env.STRIPE_SECRET);
 
 /**-----------------------------------------
  *  @desc Add a new user
