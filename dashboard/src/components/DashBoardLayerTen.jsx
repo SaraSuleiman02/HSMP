@@ -3,7 +3,7 @@ import UnitCountSeven from "./child/UnitCountSeven";
 import UsersChart from "./child/UsersChart";
 import TopCustomer from "./child/TopCustomer";
 import OverallReport from "./child/OverallReport";
-import PurchaseAndSales from "./child/PurchaseAndSales";
+import EarningStaticOne from './child/EarningStaticOne'
 
 const DashBoardLayerTen = () => {
   return (
@@ -22,8 +22,8 @@ const DashBoardLayerTen = () => {
       {/* OverallReport */}
       <OverallReport />
 
-      {/* PurchaseAndSales */}
-      {/* <PurchaseAndSales /> */}
+      {/* EarningStaticOne */}
+      <EarningStaticOne />
 
     
     </div>

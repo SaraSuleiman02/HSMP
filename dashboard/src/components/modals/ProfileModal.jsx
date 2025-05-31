@@ -14,7 +14,7 @@ const ProfileModal = ({ show, profileId, onClose }) => {
 
     const fetchProfile = async () => {
         try {
-            const res = await axiosInstance.get(`/profile/${profileId}`);
+            const res = await axiosInstance.get(`/profile/${profileId._id}`);
             setProfile(res.data);
         } catch (error) {
             console.error('Error fetching Professionals Profile:', error);
@@ -30,8 +30,7 @@ const ProfileModal = ({ show, profileId, onClose }) => {
             <Modal.Body>
                 <p><strong>Bio:</strong> {profile.bio}</p>
                 <p><strong>Skills:</strong> {Array.isArray(profile.skills) ? profile.skills.join(', ') : ''}</p>
-                <p><strong>Experience Years:</strong> {profile.experienceYears}</p>
-                <p><strong>Hourly Rate:</strong> {profile.hourlyRate} JD</p>
+                <p><strong>Experience Years:</strong> {profile.experienceYears} years</p>
                 <p><strong>Service Area:</strong> {Array.isArray(profile.serviceArea) ? profile.serviceArea.join(', ') : ''}</p>
                 <p><strong>Average Rating:</strong> {profile.averageRating}</p>
 

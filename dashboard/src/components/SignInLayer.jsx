@@ -38,7 +38,7 @@ const SignInLayer = () => {
     <section className='auth bg-base d-flex flex-wrap'>
       <div className='auth-left d-lg-block d-none'>
         <div className='d-flex align-items-center flex-column h-100 justify-content-center'>
-          <img src='assets/images/hsmp/logo-bg.png' alt='' />
+          <img src='assets/images/hsmp/bg-logo2.jpg' style={{ height: "100vh" }} alt='' />
         </div>
       </div>
       <div className='auth-right py-32 px-24 d-flex flex-column justify-content-center'>
@@ -47,7 +47,7 @@ const SignInLayer = () => {
             <Link to='/' className='mb-40 max-w-290-px'>
               <img src='/assets/images/hsmp/logo-no-bg.png' alt='HSMP Logo' />
             </Link>
-            <h4 className='mb-12'>Sign In to your Account</h4>
+            <h4 className='mb-12' style={{ color: "#f4711e" }}>Sign In to your Account</h4>
             <p className='mb-32 text-secondary-light text-lg'>
               Welcome back! please enter your detail
             </p>

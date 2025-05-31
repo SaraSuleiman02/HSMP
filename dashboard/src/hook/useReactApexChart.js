@@ -1847,7 +1847,7 @@ const useReactApexChart = () => {
 
   let barChartSeriesTwo = [
     {
-      name: "Sales",
+      name: "Subscription",
       data: [
         {
           x: "Jan",
@@ -1960,14 +1960,14 @@ const useReactApexChart = () => {
     yaxis: {
       labels: {
         formatter: function (value) {
-          return (value / 1000).toFixed(0) + "k";
+          return (value / 1000).toFixed(0) + "JD";
         },
       },
     },
     tooltip: {
       y: {
         formatter: function (value) {
-          return value / 1000 + "k";
+          return value / 1000 + "JD";
         },
       },
     },
