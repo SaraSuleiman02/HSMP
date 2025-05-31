@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import { Form, Button, Container, Row, Col, Card, Alert, InputGroup, Spinner } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
@@ -16,7 +16,7 @@ const LoginLayer = () => {
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { user, login } = useAuth();
 
     // Forgot password states
     const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
@@ -29,6 +29,23 @@ const LoginLayer = () => {
     });
     const [isLoading, setIsLoading] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
+
+    // --- useEffect for Post-Login Navigation --- 
+    useEffect(() => {
+        // Only run navigation logic if the user object exists (meaning login was successful and context updated)
+        if (user) {
+            // Check if the user is a professional and hasn't paid
+            if (user.role === 'professional' && !user.professionalPaid) {
+                toast.info('Redirecting to subscription page...');
+                navigate('/subscription');
+            } else if ((user.role === 'professioal' && user.professionalPaid) || user.role === 'homeowner') {
+                // Otherwise, navigate to the feed page
+                toast.info('Redirecting to feed...');
+                navigate('/feed');
+            }
+        }
+        // Dependency array: This effect runs when the `user` object changes.
+    }, [user, navigate]);
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -63,27 +80,32 @@ const LoginLayer = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+        setIsLoading(true); // Set loading state for login button
         try {
             const { email, password } = formData;
             if (!email || !password) {
                 setError("Email and password are required.");
                 toast.error("Email and password are required.");
+                setIsLoading(false);
                 return;
             }
-            const response = await login(email, password);
+            const loginSuccess = await login(email, password);
 
-            if (response) {
-                toast.success('Login successful!');
-                navigate('/feed');
+            if (loginSuccess) {
+                toast.success('Login successful! Redirecting...');
+                // Navigation logic is now handled by the useEffect hook
             } else {
-                setError("Login failed. Please check your credentials or try again.");
-                toast.error("Login failed. Please check your credentials or try again.");
+                // If login function itself indicates failure (e.g., returns false)
+                setError("Login failed. Please check your credentials.");
+                toast.error("Login failed. Please check your credentials.");
             }
 
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || "Something went wrong. Please try again.";
+            const errorMessage = err.response?.data?.message || err.response?.data?.error  || err.message || "Something went wrong during login.";
             setError(errorMessage);
             toast.error(errorMessage);
+        } finally {
+            setIsLoading(false); // Reset loading state
         }
     };
 
@@ -119,7 +141,7 @@ const LoginLayer = () => {
             toast.success('OTP sent successfully! Please check your email.');
             setForgotPasswordStep(2);
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || "Failed to send OTP. Please try again.";
+            const errorMessage = err.response?.data?.message || err.response?.data?.error  || err.message || "Failed to send OTP. Please try again.";
             setError(errorMessage);
             toast.error(errorMessage);
         } finally {
@@ -138,7 +160,7 @@ const LoginLayer = () => {
 
             toast.success('New OTP sent successfully! Please check your email.');
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || "Failed to resend OTP. Please try again.";
+            const errorMessage = err.response?.data?.message || err.response?.data?.error  || err.message || "Failed to resend OTP. Please try again.";
             setError(errorMessage);
             toast.error(errorMessage);
         } finally {
@@ -167,7 +189,7 @@ const LoginLayer = () => {
             toast.success('OTP verified successfully!');
             setForgotPasswordStep(3);
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || "Invalid OTP. Please try again.";
+            const errorMessage = err.response?.data?.message || err.response?.data?.error  || err.message || "Invalid OTP. Please try again.";
             setError(errorMessage);
             toast.error(errorMessage);
         } finally {
@@ -214,7 +236,7 @@ const LoginLayer = () => {
                 password: ''
             });
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || "Failed to reset password. Please try again.";
+            const errorMessage = err.response?.data?.message ||err.response?.data?.error  || err.message || "Failed to reset password. Please try again.";
             setError(errorMessage);
             toast.error(errorMessage);
         } finally {
@@ -422,9 +444,9 @@ const LoginLayer = () => {
                 <div className='auth-container'>
                     <Row className="justify-content-md-center">
                         <Col md={5}>
-                            <Card className='auth-form'  data-aos="flip-left"
-                        data-aos-easing="ease-out-cubic"
-                        data-aos-duration="1500">
+                            <Card className='auth-form' data-aos="flip-left"
+                                data-aos-easing="ease-out-cubic"
+                                data-aos-duration="1500">
                                 <Card.Header as="h3" className="text-center" style={{ background: "#e0e7f7", borderTopRightRadius: "16px", borderTopLeftRadius: "16px" }}>
                                     {forgotPasswordMode ? 'Reset Password' : 'Login'}
                                 </Card.Header>

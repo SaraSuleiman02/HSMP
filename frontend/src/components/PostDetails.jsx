@@ -313,7 +313,7 @@ const PostDetails = () => {
                                     />
                                     <div className="post-user-info">
                                         <h5
-                                            className="mb-0 post-username"
+                                            className="mb-0 user-name"
                                             onClick={() =>
                                                 navigate('/profile', {
                                                     state: { viewedUserId: post.homeownerId?._id }
@@ -336,16 +336,16 @@ const PostDetails = () => {
 
                                     <div className="post-details">
                                         <div className="detail-item">
-                                            <strong>Category:</strong> {post.category}
+                                            <strong className="post-title">Category:</strong> {post.category}
                                         </div>
                                         <div className="detail-item">
-                                            <strong>Budget:</strong> {post.budget ? `${post.budget.min} - ${post.budget.max} JD` : "N/A"}
+                                            <strong className="post-title">Budget:</strong> {post.budget ? `${post.budget.min} - ${post.budget.max} JD` : "N/A"}
                                         </div>
                                         <div className="detail-item">
-                                            <strong>Address:</strong> {post.address ? `${post.address.city}, ${post.address.country}` : "N/A"}
+                                            <strong className="post-title">Address:</strong> {post.address ? `${post.address.city}, ${post.address.country}` : "N/A"}
                                         </div>
                                         <div className="detail-item">
-                                            <strong>Deadline:</strong> {post.deadline ? formatDate(post.deadline) : "N/A"}
+                                            <strong className="post-title">Deadline:</strong> {post.deadline ? formatDate(post.deadline) : "N/A"}
                                         </div>
                                     </div>
                                 </div>

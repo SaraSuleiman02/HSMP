@@ -11,6 +11,7 @@ import FeedPage from './pages/FeedPage';
 import PostDetails from './components/PostDetails';
 import ChatPage from './pages/ChatPage';
 import NotFoundPage from './pages/NotFoundPage';
+import SubscribePage from './pages/SubscribePage';
 
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -30,6 +31,12 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
 
         {/* Protected Routes with role check*/}
+        <Route path="/subscription" element={
+          <ProtectedRoute allowedRoles={['professional']}>
+            <SubscribePage />
+          </ProtectedRoute>
+        } />
+
         <Route path="/feed" element={
           <ProtectedRoute allowedRoles={['homeowner', 'professional']}>
             <FeedPage />
@@ -65,9 +72,6 @@ function App() {
 
         {/* 404 Page */}
         <Route path="/404" element={<NotFoundPage />} />
-
-        {/* Uncomment this if you have a feed page */}
-        {/* <Route path="/feed" element={<FeedPage />} /> */}
 
       </Routes>
     </BrowserRouter>

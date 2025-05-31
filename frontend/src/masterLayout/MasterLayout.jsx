@@ -8,6 +8,7 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import axiosInstance from '../axiosConfig';
 import './MasterLayout.css';
 import TimeAgo from 'react-timeago';
+import Logo from '../images/logo.png';
 
 const MasterLayout = ({ children }) => {
     const { user, logout } = useAuth();
@@ -201,7 +202,7 @@ const MasterLayout = ({ children }) => {
                 className={`py-2 fixed-top ${(scrolled || notTransparent) ? 'bg-white shadow-sm' : 'bg-transparent'}`}
             >
                 <Container>
-                    <Navbar.Brand as={Link} to="/" className="me-0 me-md-3 brand-logo">HSMP</Navbar.Brand>
+                    <Navbar.Brand as={Link} to="/" className="me-0 me-md-3"><img src={Logo} alt="logo" className='brand-logo'/></Navbar.Brand>
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
                     <Navbar.Collapse id="basic-navbar-nav">
                         {/* --- Search Bar --- */}

@@ -6,6 +6,10 @@ import helpers from "../utils/helpers.js";
 import bcrypt from "bcryptjs";
 import jwt from 'jsonwebtoken';
 import { transporter } from '../utils/nodemailer.js';
+import Stripe from 'stripe';
+
+// Stripe Secret Key
+const stripe = Stripe('sk_test_51RSLPrCpt11BQaLBhMW0wOBmci9lkYGtK6oC867eAUbG3J6uti98SZWTrMHPfpSD2nmtlsPETnvXbRuAfhYuym5U00qxW1IcuN');
 
 /**-----------------------------------------
  *  @desc Add a new user
@@ -425,5 +429,39 @@ export const deleteUser = async (req, res) => {
         return res.status(200).json({ message: "User deleted successfully" });
     } catch (error) {
         return res.status(500).json({ message: error.message });
+    }
+}
+
+/**-----------------------------------------
+ * @desc Add Payment for the Professional
+ * @route POST /api/user/professional-payment
+ * @access Private
+ * @role Professional
+ ------------------------------------------*/
+export const professionalPay = async (req, res) => {
+    const { amount } = req.body;
+    const  id  = req.user.id;
+
+    try {
+        const professional = await User.findById(id);
+        if (!professional) {
+            return res.status(404).json({ message: "Profesional not found!" });
+        }
+
+        if (professional.professionalPaid) {
+            return res.status(400).json({ message: "Professional already Paid!" });
+        }
+
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount,
+            currency: 'usd',
+        });
+
+        professional.professionalPaid = true;
+        professional.save();
+
+        res.send({ clientSecret: paymentIntent.client_secret });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 }

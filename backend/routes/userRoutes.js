@@ -9,7 +9,8 @@ import {
     updateUserPassword,
     updateUser,
     toggleUserActivation,
-    deleteUser
+    deleteUser,
+    professionalPay,
 } from '../controllers/userController.js';
 import upload from '../middlewares/photoUpload.js';
 import verifyToken from '../middlewares/verifyToken.js';
@@ -27,6 +28,7 @@ router.post(
 ); // Add a User
 router.post('/signin', signin); // Sign in a User
 router.get('/', verifyToken, getAllUsers); //Get all Users
+router.post('/professional-payment', verifyToken, authorizePosition('professional'), professionalPay); // Add payment for professionl
 router.get('/:id', verifyToken, getUser); // Get a User by ID
 router.post('/sendOTP', sendOTP); // Send OTP for re-setting password
 router.post('/confirmOTP', confirmOTP); // Confirm OTP

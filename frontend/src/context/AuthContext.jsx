@@ -15,7 +15,8 @@ export const AuthProvider = ({ children }) => {
     phone: null,
     address: null,
     isActive: null,
-    professionalProfileId: null
+    professionalProfileId: null,
+    professionalPaid: null
   });
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +45,7 @@ export const AuthProvider = ({ children }) => {
         address: response.data.address || '',
         isActive: response.data.isActive || false,
         professionalProfileId: response.data.professionalProfileId || '',
+        professionalPaid: response.data.professionalPaid || '',
       });
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -101,6 +103,7 @@ export const AuthProvider = ({ children }) => {
       address: null,
       isActive: null,
       professionalProfileId: null,
+      professionalPaid: null,
     });
   };
 

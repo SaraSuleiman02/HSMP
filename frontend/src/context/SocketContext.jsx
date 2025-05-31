@@ -7,7 +7,7 @@ import React, {
     useRef,
 } from 'react';
 import { io } from 'socket.io-client';
-import { useAuth } from './AuthContext'; // Adjust path if needed
+import { useAuth } from './AuthContext';
 
 const SocketContext = createContext(null);
 

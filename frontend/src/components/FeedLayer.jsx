@@ -476,14 +476,14 @@ const FeedLayer = () => {
                                                         </div>
                                                     </div>
                                                     <h5 className="mb-2">{post.title}</h5>
-                                                    <p><strong>Category:</strong> {post.category}</p>
-                                                    <p><strong>Description:</strong> {post.description}</p>
-                                                    <p><strong>Budget:</strong> {post.budget?.min} - {post.budget?.max} JD</p>
+                                                    <p><strong className="post-title">Category:</strong> {post.category}</p>
+                                                    <p><strong className="post-title">Description:</strong> {post.description}</p>
+                                                    <p><strong className="post-title">Budget:</strong> {post.budget?.min} - {post.budget?.max} JD</p>
                                                     <p>
-                                                        <strong>Location:</strong> {post.address?.city}
+                                                        <strong className="post-title">Location:</strong> {post.address?.city}
                                                         {post.address?.street && `, ${post.address.street}`}
                                                     </p>
-                                                    <p><strong>Deadline:</strong> {post.deadline ? formatDate(post.deadline) : "Not specified"}</p>
+                                                    <p><strong className="post-title">Deadline:</strong> {post.deadline ? formatDate(post.deadline) : "Not specified"}</p>
                                                 </div>
 
                                                 {/* Carousel Column */}
