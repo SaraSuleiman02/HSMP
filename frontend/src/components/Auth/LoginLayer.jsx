@@ -35,7 +35,7 @@ const LoginLayer = () => {
         // Only run navigation logic if the user object exists (meaning login was successful and context updated)
         if (user) {
             // Check if the user is a professional and hasn't paid
-            if (user.role === 'professional' && !user.professionalPaid) {
+            if (user.role === 'professional' && !user.professionalPaid && user.isActive) {
                 toast.info('Redirecting to subscription page...');
                 navigate('/subscription');
             } else if ((user.role === 'professioal' && user.professionalPaid) || user.role === 'homeowner') {
