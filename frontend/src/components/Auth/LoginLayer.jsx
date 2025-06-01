@@ -38,7 +38,7 @@ const LoginLayer = () => {
             if (user.role === 'professional' && !user.professionalPaid && user.isActive) {
                 toast.info('Redirecting to subscription page...');
                 navigate('/subscription');
-            } else if ((user.role === 'professioal' && user.professionalPaid) || user.role === 'homeowner') {
+            } else if ((user.role === 'professional' && user.professionalPaid) || user.role === 'homeowner') {
                 // Otherwise, navigate to the feed page
                 toast.info('Redirecting to feed...');
                 navigate('/feed');
