@@ -20,9 +20,8 @@ export const AuthProvider = ({ children }) => {
   });
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (userId, role) => {
+  const fetchUserData = async (userId, role, token) => {
     try {
-      const token = Cookie.get('token');
       if (!token) return;
 
       const config = {
@@ -78,12 +77,14 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await axiosInstance.post('/user/signin', { email, password });
-      Cookie.set('token', response.data.token, { expires: 1 });
-
       const decoded = jwtDecode(response.data.token);
       const { id, role } = decoded;
+      await fetchUserData(id, role, response.data.token);
 
-      await fetchUserData(id, role);
+      if (user.isActive) {
+        Cookie.set('token', response.data.token, { expires: 1 });
+      }
+
       return response.data;
     } catch (error) {
       console.error('Login error:', error);

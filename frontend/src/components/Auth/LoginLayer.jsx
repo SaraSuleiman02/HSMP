@@ -42,6 +42,8 @@ const LoginLayer = () => {
                 // Otherwise, navigate to the feed page
                 toast.info('Redirecting to feed...');
                 navigate('/feed');
+            } else if (user.role === 'professional' && !user.isActive) {
+                toast.warning("Professional Account is not activated yet!");
             }
         }
         // Dependency array: This effect runs when the `user` object changes.
@@ -91,10 +93,7 @@ const LoginLayer = () => {
             }
             const loginSuccess = await login(email, password);
 
-            if (loginSuccess) {
-                toast.success('Login successful! Redirecting...');
-                // Navigation logic is now handled by the useEffect hook
-            } else {
+            if (!loginSuccess) {
                 // If login function itself indicates failure (e.g., returns false)
                 setError("Login failed. Please check your credentials.");
                 toast.error("Login failed. Please check your credentials.");
